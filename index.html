@@ -164,6 +164,32 @@ a.botpill:hover{border-color:var(--ink)}
 .pi.klaar .t{text-decoration:line-through;color:var(--mute)}
 .pi.klaar{opacity:.7}
 
+/* bak */
+.bakbtn{display:flex;align-items:center;gap:6px;width:calc(100% - 14px);margin:0 7px 7px;border:1px solid var(--line);background:#fff;border-radius:4px;padding:5px 8px;font-size:12px;font-weight:700;color:var(--ink2)}
+.bakbtn b{font-family:var(--mono);font-size:11px;background:var(--c);color:#fff;border-radius:999px;padding:0 7px;min-width:20px;text-align:center}
+.bakbtn b.nul{background:#E2E1DC;color:var(--soft)}
+.bakbtn .sp{flex:1}.bakbtn .pijl{color:var(--soft)}
+.bakbtn.open{border-color:var(--c);border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0}
+.bak{margin:0 7px 7px;border:1px solid var(--c);border-top:0;background:#fff;border-radius:0 0 4px 4px;padding:4px 6px 2px}
+.bak .add{padding:4px 0 4px}
+.bi{border-bottom:1px solid var(--line2);padding:5px 0}
+.bi .r1{display:flex;align-items:center;gap:6px}
+.bi .t{flex:1;min-width:0;font-size:12.5px;outline:none;word-break:break-word;cursor:text}
+.bi .t:focus{background:#FAFAF6}
+.bi .chk{width:15px;height:15px}
+.bi .prio{font-size:9.5px;line-height:14px;padding:0 4px}
+.bi .tag{cursor:default}.bi .tag.new{cursor:pointer}
+.bi .pl{border:1px solid var(--line);background:#fff;border-radius:4px;font-size:11px;font-weight:600;padding:1px 6px;white-space:nowrap;color:var(--ink2)}
+.bi .pl.on{background:#E6EEF8;border-color:#C9D8EC;color:#1F3A5F}
+.bi .r2{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin:6px 0 2px 21px}
+.bi .r2 input,.bi .r2 select{border:1px solid var(--line);border-radius:4px;padding:2px 4px;font-size:11.5px;background:#fff}
+.bi .r2 .lk{border:1px solid var(--line);background:#fff;border-radius:4px;font-size:11px;font-weight:600;padding:2px 6px;text-decoration:none}
+.bi .r2 .x{border:0;background:transparent;color:var(--mute)}
+.bi .note{margin:3px 0 0 21px;font-size:11.5px;color:var(--ink2)}
+.bi.klaar .t{text-decoration:line-through;color:var(--mute)}
+.bi.drag{opacity:.4}
+.bkuitleg{font-family:var(--mono);font-size:10px;color:#fff;background:var(--ink);border-radius:999px;padding:0 5px}
+.ln .bot .bk{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:var(--c);border-radius:999px;padding:0 6px;margin-right:6px}
 /* rechterkolom */
 .ritme .seg{display:flex}.ritme .seg button{flex:1;padding:7px 0}
 .ritme select{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:#fff;font-size:12.5px}
@@ -277,7 +303,7 @@ dialog .df{padding:10px 18px;border-top:1px solid var(--line);display:flex;gap:8
 </header>
 
 <section class="metro" aria-label="Lijnenkaart">
-  <div class="mh"><span class="lbl">Lijnenkaart</span><span class="hint">Elke lijn is een onderwerp, met een bot erachter. ● open · ○ klaar · ◎ bij de bot</span></div>
+  <div class="mh"><span class="lbl">Lijnenkaart</span><span class="hint">Elke lijn is een groot onderwerp met een bot erachter, en een bak voor de losse dingen. ● open · ○ klaar · ◎ bij de bot · <b class="bkuitleg">n</b> in de bak</span></div>
   <div class="lines" id="lines"></div>
 </section>
 
@@ -312,7 +338,7 @@ dialog .df{padding:10px 18px;border-top:1px solid var(--line);display:flex;gap:8
       <div class="seg" id="weergave"><button data-w="alles">Alle lijnen</button><button data-w="actief">Met briefjes</button></div>
     </div>
     <div class="board" id="board"></div>
-    <div class="foot"><button id="lnkArch">Archief</button><button id="lnkExport">Back-up</button><span>Jij bepaalt de prioriteit. De bot achter de lijn voert uit.</span></div>
+    <div class="foot"><button id="lnkArch">Archief</button><button id="lnkExport">Back-up</button><span>Spuien, sorteren, plannen. Speel het bord leeg.</span></div>
   </main>
 
   <aside class="col colR">
@@ -406,7 +432,7 @@ const p2=n=>String(n).padStart(2,"0");
 const ymd=d=>d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
 const todayStr=()=>ymd(new Date());
 function weekKey(d=new Date()){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return t.getUTCFullYear()+"-W"+p2(Math.ceil(((t-y)/864e5+1)/7))}
-const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">",'"':""","'":"&#39;"}[c]));
 const icon=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
 const now=()=>Date.now();
 const STANDAARD_REPO="Bartolomei-create/koach-data", STANDAARD_BESTAND="board.json";
@@ -418,38 +444,42 @@ function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");cl
 // Chatlinks naar de bots staan in je privé board.json (Instellingen → Lijnen en bots), niet in deze openbare code.
 const BOT={};
 const STANDAARD=[
- ["klanten","Blouwdruk klanten","#D7263D","Cirqll","klant,klanten,adviesgesprek,terugbellen,lead,intake,hypotheek"],
- ["offertes","Offertes & facturen","#F28C28","Nmbrs","offerte,offertes,factuur,facturen,facturatie,nmbrs,mollie,abonnement,betaling,herinnering,debiteur"],
+ ["admin","Administratie op orde","#2E8B57","I GroBot","administratie,boekhouding,accountant,exact,belasting,belastingaangifte,aangifte,btw,bon,bonnetje,bonnetjes,bonnen,kassabon,declaratie,declareren,revolut,uitgave,inkoopfactuur,bank,betalen,geldstroom,budget,verzekering,lening,pensioen,firm24,bv,kvk,statuten,holding,aandeelhouder"],
+ ["klanten","Klanten & CRM","#D7263D","Cirqll","klant,klanten,crm,cirqll,adviesgesprek,terugbellen,lead,intake,hypotheek,afspraak,afspraken,bookings,agenda"],
+ ["offertes","Offertes & facturatie","#F28C28","Nmbrs","offerte,offertes,factuur,facturen,facturatie,nmbrs,mollie,abonnement,herinnering,debiteur"],
  ["dossiers","Dossiers","#1F5AA6","Blouwdruk Dossiers","dossier,dossiers,taxatie,taxateur,notaris,stukken,aanvraag,gegevensdelen,aho,akte"],
- ["box","Box & archief","#3A9AD9","Box","box,archief,sharepoint,map,mappen,opruimen,scannen,documenten"],
- ["bv","BV-oprichting","#5B2C8F","Firm24","bv,firm24,oprichting,oprichten,kvk,statuten,holding,bernhard beheer,aandeelhouder"],
- ["agenda","Agenda","#128C8C","Agenda","agenda,afspraak,afspraken,outlook,bookings,inplannen,vergadering,meeting,overleg"],
- ["bonnetjes","Bonnetjes","#7CA32B","BonBot","bon,bonnetje,bonnetjes,kassabon,bonnen,declaratie,declareren,revolut,uitgave"],
- ["social","Social & marketing","#C2185B","Social","linkedin,instagram,social,post,posten,website,framer,marketing,nieuwsbrief,video,content"],
+ ["box","Archief SharePoint → Box","#3A9AD9","Box","box,archief,sharepoint,onedrive,map,mappen,scannen,documenten"],
  ["blik","Blikmeester","#E3B505","I GroBot","blikmeester,teleprompter,opname,opnemen,cursus,ondernemers,module"],
  ["vastgoed","Vastgoed privé","#8B5A2B","I GroBot","vastgoed,huurder,huurders,verhuur,pand,appartement,huurcontract,vve"],
- ["geld","Geldstroom & administratie","#2E8B57","I GroBot","belasting,belastingaangifte,aangifte,btw,administratie,boekhouding,geldstroom,budget,verzekering,bank,lening,pensioen"],
  ["huis","Huis & thuis","#6B7780","Zelf","kliko,boodschappen,huis,thuis,tuin,schoonmaken,klusje,klussen,verbouwing,energie,wasmachine,auto,apk"],
  ["kids","Kids","#EC6FA5","Zelf","kids,kinderen,school,ophalen,brengen,zwemles,oppas,verjaardag,juf"],
  ["sport","Sport & ritme","#9B8BD8","Zelf","sport,sporten,gym,hardlopen,fietsen,training,trainen,slapen,slaap,tandarts,huisarts,wandelen"],
- ["koach","Koach / Pinkoach","#111111","Zelf","koach,pinkoach,bord,dashboard,grokbot,cursor,bots"]
+ ["koach","Koach / Pinkoach","#111111","Zelf","koach,pinkoach,bord,dashboard,grokbot,cursor,bots"],
+ ["social","Marketing & social","#C2185B","Social","linkedin,instagram,social,post,posten,website,framer,marketing,nieuwsbrief,video,content"]
 ];
+// Oude lijnen (v2) gaan op in de nieuwe indeling. Niets gaat verloren: de lijn wordt gearchiveerd, de briefjes verhuizen.
+const OUDE_LIJN={geld:"admin",bonnetjes:"admin",bv:"admin",agenda:"klanten"};
+// Structureel = iets inrichten, op orde brengen, opzetten. Dat is een onderwerp op het bord. De rest is operationeel en gaat in de bak.
+const STRUCTUREEL=/(^|\s)(\+\+|onderwerp:)|\b(inrichten|inrichting|instellen|opzetten|opzet|op orde|regelen|structuur|systeem|systemen|proces|werkwijze|routine|koppelen|koppeling|migreren|migratie|overzetten|overhevelen|automatiseren|toegang|bij krijgen|bijwerken|completeren|uitzoeken|strategie|herzien|opbouwen|bouwen|implementeren|setup|fixen|leeg spelen)\b/i;
+function kiesSoort(t){return STRUCTUREEL.test(String(t))?"onderwerp":"bak"}
 function standaardLijnen(){return STANDAARD.map(([id,naam,kleur,bot,woorden],i)=>({id,naam,kleur,bot,link:BOT[bot]||"",woorden,volgorde:i+1,archief:false,bijgewerkt:0}))}
 const isZelf=b=>!b||/^zelf$/i.test(b.trim());
 
 /* ============ Staat ============ */
-function leeg(){return{schema:"koach/2",instellingen:{naam:"",ritme:3,periode:"dag",toon:2,rol:"wortel",weergave:"alles",bijgewerkt:0},lijnen:standaardLijnen(),briefjes:[],planning:{},kompas:[]}}
+function leeg(){return{schema:"koach/3",instellingen:{naam:"",ritme:3,periode:"dag",toon:2,rol:"wortel",weergave:"alles",bijgewerkt:0},lijnen:standaardLijnen(),briefjes:[],planning:{},kompas:[]}}
 function hsh(s){let h=5381;for(const c of String(s))h=(h*33+c.charCodeAt(0))>>>0;return h.toString(36)}
 // Standaardwaarden zijn vast (geen tijd of toeval), zodat twee apparaten exact hetzelfde bestand maken.
 function normBriefje(b){const x=Object.assign({tekst:"",lijn:"",prio:2,status:"open",archief:false,weg:false,bron:"bart",nieuw:false,notitie:"",notitieVan:"",gemaakt:0,klaarOp:null},b);
-  if(!x.id)x.id="b-"+hsh(x.tekst+"|"+x.gemaakt);if(x.bijgewerkt==null)x.bijgewerkt=x.gemaakt||0;x.prio=[1,2,3].includes(+x.prio)?+x.prio:2;if(!["open","bot","klaar"].includes(x.status))x.status="open";return x}
+  if(!x.id)x.id="b-"+hsh(x.tekst+"|"+x.gemaakt);if(x.bijgewerkt==null)x.bijgewerkt=x.gemaakt||0;x.prio=[1,2,3].includes(+x.prio)?+x.prio:2;if(!["open","bot","klaar"].includes(x.status))x.status="open";if(OUDE_LIJN[x.lijn]!=null)x.lijn=OUDE_LIJN[x.lijn];if(x.soort!=="onderwerp"&&x.soort!=="bak")x.soort=kiesSoort(x.tekst);if(x.plan===undefined)x.plan=null;return x}
 function norm(x){
   const b=leeg();x=x&&typeof x==="object"?x:{};
-  const s={schema:"koach/2",instellingen:Object.assign(b.instellingen,x.instellingen||{}),
+  const s={schema:"koach/3",instellingen:Object.assign(b.instellingen,x.instellingen||{}),
     lijnen:Array.isArray(x.lijnen)&&x.lijnen.length?x.lijnen.map(l=>Object.assign({id:"l-"+hsh(l.naam||""),naam:"Lijn",kleur:"#888888",bot:"Zelf",link:"",woorden:"",volgorde:99,archief:false,bijgewerkt:0},l)):b.lijnen,
     briefjes:(Array.isArray(x.briefjes)?x.briefjes:[]).map(normBriefje),
     planning:x.planning&&typeof x.planning==="object"?x.planning:{},
     kompas:(Array.isArray(x.kompas)?x.kompas:[]).map(k=>Object.assign({id:"k-"+hsh(JSON.stringify(k)),gemaakt:0,bijgewerkt:0},k))};
+  for(const l of s.lijnen)if(OUDE_LIJN[l.id]!=null)l.archief=true;
+  for(const l of standaardLijnen())if(!s.lijnen.some(x=>x.id===l.id))s.lijnen.push(l);
   s.lijnen.sort((a,c)=>(a.volgorde-c.volgorde)||(a.id<c.id?-1:1));
   s.briefjes.sort((a,c)=>(a.gemaakt-c.gemaakt)||(a.id<c.id?-1:a.id>c.id?1:0));
   s.kompas.sort((a,c)=>(a.gemaakt-c.gemaakt)||(a.id<c.id?-1:1));
@@ -541,10 +571,10 @@ function scoreLijn(tekst,l){const t=" "+norml(tekst).replace(/[^a-z0-9]+/g," ")+
 function kiesLijn(tekst){let best="",bs=0;for(const l of actieveLijnen()){const s=scoreLijn(tekst,l);if(s>bs){bs=s;best=l.id}}return best}
 function kiesPrio(t){t=norml(t);if(/\b(vandaag|morgen|asap|dringend|urgent|deadline|spoed|direct|boete|te laat|vanavond)\b/.test(t))return 1;
   if(/\b(ooit|later|een keer|misschien|idee|zou leuk|ergens)\b/.test(t))return 3;return 2}
-function maakBriefjes(regels,{sorteer=true,lijn=null,bron="bart"}={}){
+function maakBriefjes(regels,{sorteer=true,lijn=null,bron="bart",soort=null}={}){
   regels=regels.map(s=>s.trim()).filter(Boolean);const t=now();
-  const nieuw=regels.map((tekst,i)=>normBriefje({id:uid(),tekst,lijn:lijn!=null?lijn:(sorteer?kiesLijn(tekst):""),prio:kiesPrio(tekst),bron,gemaakt:t+i,bijgewerkt:t+i}));
-  S.briefjes.push(...nieuw);save();render();return nieuw}
+  const nieuw=regels.map((tekst,i)=>normBriefje({id:uid(),soort:soort||kiesSoort(tekst),tekst:tekst.replace(/^\s*(\+\+|onderwerp:)\s*/i,""),lijn:lijn!=null?lijn:(sorteer?kiesLijn(tekst):""),prio:kiesPrio(tekst),bron,gemaakt:t+i,bijgewerkt:t+i}));
+  S.briefjes.push(...nieuw);save();render(true);return nieuw}
 
 /* ============ Kladblok ============ */
 let ottItems=[];
@@ -560,7 +590,8 @@ $("#ott").addEventListener("click",e=>{const h=e.target.closest("[data-h]");if(h
   if(e.target.closest("#ottSorteer")){sorteerRegels(ottItems.map(o=>o.wordt));ottItems=[];renderOtt();$("#dump").value=""}});
 $("#btnOnttaal").onclick=()=>{const t=$("#dump").value.trim();if(!t){toast("Schrijf eerst iets op");$("#dump").focus();return}ottItems=splitDump(t).map(z=>({was:z,wordt:onttaalZin(z),n:0}));renderOtt()};
 function sorteerRegels(r){const n=maakBriefjes(r);if(!n.length){toast("Schrijf eerst iets op");return}const los=n.filter(b=>!b.lijn).length;
-  toast(`${n.length} ${n.length===1?"briefje":"briefjes"} op het bord${los?`, ${los} nog te sorteren`:""}`)}
+  const bak=n.filter(b=>b.lijn&&b.soort==="bak").length,ond=n.filter(b=>b.lijn&&b.soort==="onderwerp").length;
+  toast([bak?`${bak} in de bakken`:"",ond?`${ond} ${ond===1?"onderwerp":"onderwerpen"} op het bord`:"",los?`${los} nog te sorteren`:""].filter(Boolean).join(", "))}
 $("#btnSorteer").onclick=()=>{const r=splitDump($("#dump").value);if(!r.length){toast("Schrijf eerst iets op");$("#dump").focus();return}sorteerRegels(r);$("#dump").value="";ottItems=[];renderOtt()};
 $("#dump").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();$("#btnSorteer").click()}});
 $("#btnGrok").onclick=()=>{const t=($("#dump").value||"").trim();if(!t){toast("Zet eerst je vraag in het kladblok");return}window.open("https://grok.com/?q="+encodeURIComponent(t.slice(0,1800)),"_blank","noopener")};
@@ -572,55 +603,89 @@ function sorteerBord(list){return list.slice().sort((a,b)=>((a.status==="klaar")
 function lijnOpties(sel){return `<option value="">Nog te sorteren</option>`+actieveLijnen().map(l=>`<option value="${esc(l.id)}" ${l.id===sel?"selected":""}>${esc(l.naam)}</option>`).join("")}
 function botLabel(l,cls=""){if(!l)return"";const z=isZelf(l.bot);const t=esc(z?"zelf":l.bot);return l.link&&!z?`<a class="botpill ${cls}" href="${esc(l.link)}" title="Open de chat met ${esc(l.bot)}">${t}</a>`:`<span class="botpill ${z?"zelf":""} ${cls}">${t}</span>`}
 
+const isOnd=b=>b.soort==="onderwerp", isBak=b=>b.soort!=="onderwerp";
+const bakOpen=new Set((()=>{try{return JSON.parse(localStorage.getItem("koach.bakOpen"))||[]}catch(e){return[]}})());
+const planOpen=new Set();
+function bewaarBakOpen(){localStorage.setItem("koach.bakOpen",JSON.stringify([...bakOpen]))}
+const bakVan=id=>levend().filter(b=>b.lijn===id&&isBak(b)&&zichtbaar(b));
+const bakOpenTeller=id=>levend().filter(b=>b.lijn===id&&isBak(b)&&b.status!=="klaar").length;
 function renderLijnen(){
-  $("#lines").innerHTML=actieveLijnen().map(l=>{const bs=levend().filter(b=>b.lijn===l.id&&zichtbaar(b));
-    const dots=sorteerBord(bs).slice(0,10).map(b=>`<i class="${b.status==="open"?"f":b.status==="bot"?"b":""}"></i>`).join("")+(bs.length>10?`<em>+${bs.length-10}</em>`:"");
-    return `<button class="ln" data-lijn="${esc(l.id)}" style="--c:${esc(l.kleur)}" title="${esc(l.naam)} · ${esc(isZelf(l.bot)?"zelf":l.bot)}"><span class="bul">${esc(l.naam[0]||"")}</span><span class="trk"><span class="nm">${esc(l.naam)}</span><span class="st">${dots}</span></span><span class="bot">${esc(isZelf(l.bot)?"zelf":l.bot)}</span></button>`}).join("")}
+  $("#lines").innerHTML=actieveLijnen().map(l=>{const bs=levend().filter(b=>b.lijn===l.id&&isOnd(b)&&zichtbaar(b));const nb=bakOpenTeller(l.id);
+    const dots=sorteerBord(bs).slice(0,8).map(b=>`<i class="${b.status==="open"?"f":b.status==="bot"?"b":""}"></i>`).join("")+(bs.length>8?`<em>+${bs.length-8}</em>`:"");
+    return `<button class="ln" data-lijn="${esc(l.id)}" style="--c:${esc(l.kleur)}" title="${esc(l.naam)} · ${esc(isZelf(l.bot)?"zelf":l.bot)} · ${nb} in de bak"><span class="bul">${esc(l.naam[0]||"")}</span><span class="trk"><span class="nm">${esc(l.naam)}</span><span class="st">${dots}</span></span><span class="bot">${nb?`<b class="bk">${nb}</b>`:""}${esc(isZelf(l.bot)?"zelf":l.bot)}</span></button>`}).join("")}
 
 function piHtml(b){const l=lijnVan(b.lijn);const pl=planIds().includes(b.id);const botNaam=l&&!isZelf(l.bot)?l.bot:"";
   return `<div class="pi ${b.status==="klaar"?"klaar":""}" style="--c:${esc(kleur(b.lijn))}" data-id="${esc(b.id)}" draggable="true">
   <div class="r1"><button class="prio p${b.prio}" data-a="prio" title="Prioriteit: klik om te wisselen">P${b.prio}</button>${b.nieuw?`<span class="tag new">NIEUW · ${esc(b.bron||"bot")}</span>`:""}${b.status==="bot"?`<span class="tag bot">BIJ ${esc((botNaam||"bot").toUpperCase())}</span>`:""}${pl?`<span class="tag plan">${I().periode==="week"?"DEZE WEEK":"VANDAAG"}</span>`:""}<span class="sp"></span><input type="checkbox" class="chk" data-a="klaar" ${b.status==="klaar"?"checked":""} aria-label="Afvinken" title="Afvinken"></div>
   <div class="t" contenteditable="true" spellcheck="false" data-a="tekst">${esc(b.tekst)}</div>
   ${b.notitie?`<div class="note"><b>${esc(b.notitieVan||botNaam||"Bot")}:</b> ${esc(b.notitie)}</div>`:""}
-  <div class="ft">${botNaam&&b.status!=="klaar"?`<button data-a="bot" class="${b.status==="bot"?"on":""}" title="${b.status==="bot"?"Terug naar jou":"Laat "+esc(botNaam)+" dit uitvoeren"}">${b.status==="bot"?"Bij "+esc(botNaam):"→ "+esc(botNaam)}</button>`:""}${b.nieuw?`<button data-a="gezien">Gezien</button>`:""}<span class="sp"></span><button data-a="arch" title="Naar archief">${icon("arch")}</button></div></div>`}
+  <div class="ft">${botNaam&&b.status!=="klaar"?`<button data-a="bot" class="${b.status==="bot"?"on":""}" title="${b.status==="bot"?"Terug naar jou":"Laat "+esc(botNaam)+" dit uitvoeren"}">${b.status==="bot"?"Bij "+esc(botNaam):"→ "+esc(botNaam)}</button>`:""}${b.nieuw?`<button data-a="gezien">Gezien</button>`:""}<span class="sp"></span><button data-a="omlaag" title="Geen onderwerp: naar de bak">↓ bak</button><button data-a="arch" title="Naar archief">${icon("arch")}</button></div></div>`}
+
+const wanneer=p=>{if(!p||!p.date)return"";const [y,m,d]=p.date.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString("nl-NL",{weekday:"short",day:"numeric",month:"short"})+" "+(p.time||"")};
+function biHtml(b){const l=lijnVan(b.lijn);const botNaam=l&&!isZelf(l.bot)?l.bot:"";const open=planOpen.has(b.id);const p=b.plan||standaardBakSlot();
+  return `<div class="bi ${b.status==="klaar"?"klaar":""}" data-id="${esc(b.id)}" draggable="true">
+   <div class="r1"><input type="checkbox" class="chk" data-a="klaar" ${b.status==="klaar"?"checked":""} aria-label="Afvinken"><button class="prio p${b.prio}" data-a="prio" title="Prioriteit">P${b.prio}</button>
+   <span class="t" contenteditable="true" spellcheck="false" data-a="tekst">${esc(b.tekst)}</span>
+   ${b.nieuw?`<span class="tag new" data-a="gezien" title="Gezien">NIEUW</span>`:""}${b.status==="bot"?`<span class="tag bot">BIJ ${esc((botNaam||"bot").toUpperCase())}</span>`:""}
+   <button class="pl ${b.plan?"on":""}" data-a="plan" title="In je agenda zetten">${b.plan?esc(wanneer(b.plan)):"Plan"}</button></div>
+   ${b.notitie?`<div class="note"><b>${esc(b.notitieVan||botNaam||"Bot")}:</b> ${esc(b.notitie)}</div>`:""}
+   ${open?`<div class="r2"><input type="date" class="bDate" value="${esc(p.date)}" aria-label="Datum"><input type="time" class="bTime" value="${esc(p.time)}" step="900" aria-label="Tijd"><select class="bDur" aria-label="Duur">${[15,25,30,45,60,90,120].map(m=>`<option value="${m}" ${m===+p.dur?"selected":""}>${m<60?m+" min":String(m/60).replace(".",",")+" u"}</option>`).join("")}</select>
+    <button class="lk" data-a="ics" title="Download als afspraak (.ics)">.ics</button><a class="lk" target="_blank" rel="noopener noreferrer" href="${esc(outlookUrl(b,p))}">Outlook</a>
+    ${botNaam&&b.status!=="klaar"?`<button class="lk" data-a="bot">${b.status==="bot"?"Terug van "+esc(botNaam):"→ "+esc(botNaam)}</button>`:""}<button class="lk" data-a="omhoog" title="Is dit eigenlijk een groot onderwerp?">↑ bord</button><button class="lk" data-a="arch">Archief</button>${b.plan?`<button class="x" data-a="ontplan" title="Uit de agenda halen">✕</button>`:""}</div>`:""}
+  </div>`}
+function standaardBakSlot(){const d=new Date();const h=Math.min(Math.max(d.getHours()+1,9),17);return{date:todayStr(),time:p2(h)+":00",dur:30}}
 
 function renderBord(){
   const w=I().weergave||"alles";$$("#weergave [data-w]").forEach(x=>x.classList.toggle("on",x.dataset.w===w));
   const live=levend();
-  $("#board").innerHTML=actieveLijnen().map(l=>{const bs=sorteerBord(live.filter(b=>b.lijn===l.id&&zichtbaar(b)));const open=bs.filter(b=>b.status!=="klaar").length;
-    if(w==="actief"&&!bs.length)return"";
+  $("#board").innerHTML=actieveLijnen().map(l=>{const bs=sorteerBord(live.filter(b=>b.lijn===l.id&&isOnd(b)&&zichtbaar(b)));const open=bs.filter(b=>b.status!=="klaar").length;
+    const bak=sorteerBord(bakVan(l.id));const nb=bakOpenTeller(l.id);const isOpen=bakOpen.has(l.id);
+    if(w==="actief"&&!bs.length&&!nb)return"";
     return `<section class="stack ${bs.length?"":"leeg"}" style="--c:${esc(l.kleur)}" data-lijn="${esc(l.id)}">
-     <div class="sh"><span class="nm">${esc(l.naam)}</span><span class="cnt">${open}</span>${botLabel(l)}</div>
+     <div class="sh"><span class="nm">${esc(l.naam)}</span><span class="cnt" title="Open onderwerpen">${open}</span>${botLabel(l)}</div>
      <div class="cards">${bs.map(piHtml).join("")}</div>
-     <div class="add"><input placeholder="+ briefje" data-add="${esc(l.id)}" aria-label="Nieuw briefje op ${esc(l.naam)}"></div></section>`}).join("")||`<p class="hint">Nog geen briefjes. Begin in het kladblok.</p>`;
-  const open=live.filter(b=>b.status==="open").length,bot=live.filter(b=>b.status==="bot").length,klaar=live.filter(vandaagKlaar).length;
-  $("#stats").textContent=`${open} open · ${bot} bij bots · ${klaar} klaar vandaag`;
+     <div class="add"><input placeholder="+ onderwerp" data-add="${esc(l.id)}" data-soort="onderwerp" aria-label="Nieuw onderwerp op ${esc(l.naam)}"></div>
+     <button class="bakbtn ${isOpen?"open":""}" data-bak="${esc(l.id)}" aria-expanded="${isOpen}"><span>Bak</span><b class="${nb?"":"nul"}">${nb}</b><span class="sp"></span><span class="pijl">${isOpen?"▴":"▾"}</span></button>
+     ${isOpen?`<div class="bak">${bak.map(biHtml).join("")||`<div class="leegtxt">Leeg gespeeld.</div>`}<div class="add"><input placeholder="+ in de bak" data-add="${esc(l.id)}" data-soort="bak" aria-label="Nieuw in de bak van ${esc(l.naam)}"></div></div>`:""}</section>`}).join("")||`<p class="hint">Nog niets. Begin in het kladblok.</p>`;
+  const ond=live.filter(b=>isOnd(b)&&b.lijn&&b.status!=="klaar").length,bak=live.filter(b=>isBak(b)&&b.lijn&&b.status!=="klaar").length,bot=live.filter(b=>b.status==="bot").length,klaar=live.filter(vandaagKlaar).length;
+  $("#stats").textContent=`${ond} onderwerpen · ${bak} in de bakken · ${bot} bij bots · ${klaar} klaar vandaag`;
 }
 function renderLos(){const los=sorteerBord(levend().filter(b=>!b.lijn&&b.status!=="klaar"));$("#nLos").textContent=los.length||"";
-  $("#los").innerHTML=los.length?los.map(b=>`<li data-id="${esc(b.id)}"><span class="cb"></span><span>${esc(b.tekst)}</span><select data-a="lijn" aria-label="Kies lijn">${lijnOpties("")}</select></li>`).join(""):`<li style="display:block;border-style:dashed;background:transparent" class="leegtxt">Alles staat op een lijn.</li>`}
+  $("#los").innerHTML=los.length?los.map(b=>`<li data-id="${esc(b.id)}"><span class="cb"></span><span>${esc(b.tekst)}</span><select data-a="lijn" aria-label="Kies lijn">${lijnOpties("")}</select></li>`).join(""):`<li style="display:block;border-style:dashed;background:transparent" class="leegtxt">Alles zit op zijn plek.</li>`}
 function renderNieuw(){const n=levend().filter(b=>b.nieuw);const c=$("#nNieuw");c.textContent=n.length;c.classList.toggle("z",!n.length);
-  $("#nieuw").innerHTML=n.length?n.map(b=>{const l=lijnVan(b.lijn);return `<li data-id="${esc(b.id)}" style="--c:${esc(kleur(b.lijn))}"><span class="cb"></span><span>${esc(b.tekst)}<div class="meta">${esc(b.bron||"bot")} → ${esc(l?l.naam:"nog te sorteren")}${b.notitie?" · "+esc(b.notitie):""}</div></span><button class="btn sm" data-a="gezien">Gezien</button></li>`}).join(""):`<li style="display:block;border-style:dashed;background:transparent" class="leegtxt">Niets nieuws. Wat GroBot of een bot voor je neerzet, verschijnt hier eerst.</li>`}
+  $("#nieuw").innerHTML=n.length?n.map(b=>{const l=lijnVan(b.lijn);return `<li data-id="${esc(b.id)}" style="--c:${esc(kleur(b.lijn))}"><span class="cb"></span><span>${esc(b.tekst)}<div class="meta">${esc(b.bron||"bot")} → ${esc(l?l.naam:"nog te sorteren")}${l?(isOnd(b)?" · bord":" · bak"):""}${b.notitie?" · "+esc(b.notitie):""}</div></span><button class="btn sm" data-a="gezien">Gezien</button></li>`}).join(""):`<li style="display:block;border-style:dashed;background:transparent" class="leegtxt">Niets nieuws. Wat GroBot of een bot voor je neerzet, verschijnt hier eerst.</li>`}
 function renderBots(){const m=new Map();for(const l of actieveLijnen()){if(isZelf(l.bot))continue;const k=l.bot;if(!m.has(k))m.set(k,{l,n:0,open:0});const e=m.get(k);for(const b of levend())if(b.lijn===l.id){if(b.status==="bot")e.n++;if(b.status==="open")e.open++}}
   $("#bots").innerHTML=[...m.entries()].map(([k,e])=>`<li style="--c:${esc(e.l.kleur)}">${botLabel(e.l)}<span class="n">${e.n} bezig · ${e.open} open</span></li>`).join("")}
-function render(){if(bezigMetTypen()){render.uitgesteld=true;return}render.uitgesteld=false;
+function render(forceer){if(!forceer&&bezigMetTypen()){render.uitgesteld=true;return}render.uitgesteld=false;
   $("#who").textContent="Bord"+(I().naam?" van "+I().naam:"");renderLijnen();renderBord();renderLos();renderNieuw();renderPlan();renderKmini();renderBots()}
-function bezigMetTypen(){const a=document.activeElement;return !!(a&&a.matches(".pi .t,.wordt,[data-add],.task input[type=time],.task input[type=date]"))}
+function bezigMetTypen(){const a=document.activeElement;return !!(a&&a.matches(".pi .t,.bi .t,.wordt,[data-add],.task input[type=time],.task input[type=date],.bi input[type=time],.bi input[type=date]"))}
 document.addEventListener("focusout",()=>setTimeout(()=>{if(render.uitgesteld&&!bezigMetTypen())render()},0));
 
-/* ============ Interactie op het bord ============ */
+/* ============ Interactie op het bord en in de bakken ============ */
 const PRIO_NEXT={1:2,2:3,3:1};
-function bordKlik(e){const pi=e.target.closest(".pi");if(!pi)return;const b=briefje(pi.dataset.id);const a=e.target.closest("[data-a]");if(!a||!b)return;
-  if(a.dataset.a==="prio"){raak(b,{prio:PRIO_NEXT[b.prio]});render()}
-  if(a.dataset.a==="bot"){const naar=b.status!=="bot";raak(b,{status:naar?"bot":"open"});render();const l=lijnVan(b.lijn);toast(naar?`Bij ${l.bot}. GroBot zet het door.`:"Terug bij jou")}
-  if(a.dataset.a==="gezien"){raak(b,{nieuw:false});render()}
-  if(a.dataset.a==="arch"){raak(b,{archief:true});render();toast("Naar archief. Terug te halen onder Archief.")}}
+function bordKlik(e){const bk=e.target.closest("[data-bak]");if(bk){const id=bk.dataset.bak;bakOpen.has(id)?bakOpen.delete(id):bakOpen.add(id);bewaarBakOpen();render();return}
+  const pi=e.target.closest(".pi,.bi");if(!pi)return;const b=briefje(pi.dataset.id);const a=e.target.closest("[data-a]");if(!a||!b)return;const l=lijnVan(b.lijn);
+  switch(a.dataset.a){
+  case"prio":raak(b,{prio:PRIO_NEXT[b.prio]});break;
+  case"bot":{const naar=b.status!=="bot";raak(b,{status:naar?"bot":"open"});toast(naar?`Bij ${l.bot}. GroBot zet het door.`:"Terug bij jou");break}
+  case"gezien":raak(b,{nieuw:false});break;
+  case"arch":raak(b,{archief:true});toast("Naar archief. Terug te halen onder Archief.");break;
+  case"omlaag":raak(b,{soort:"bak"});bakOpen.add(b.lijn);bewaarBakOpen();toast("Naar de bak van "+l.naam);break;
+  case"omhoog":raak(b,{soort:"onderwerp"});planOpen.delete(b.id);toast("Op het bord als onderwerp");break;
+  case"plan":if(planOpen.has(b.id))planOpen.delete(b.id);else{planOpen.add(b.id);if(!b.plan)raak(b,{plan:standaardBakSlot()})}break;
+  case"ontplan":raak(b,{plan:null});planOpen.delete(b.id);break;
+  case"ics":downloadIcs([b],"koach-"+slug(b.tekst)+".ics",x=>x.plan||standaardBakSlot());toast("Afspraak gedownload. Open het bestand voor je agenda.");return;
+  default:return}
+  render()}
 $("#board").addEventListener("click",bordKlik);
-$("#board").addEventListener("change",e=>{const pi=e.target.closest(".pi");if(!pi||e.target.dataset.a!=="klaar")return;const b=briefje(pi.dataset.id);const k=e.target.checked;raak(b,{status:k?"klaar":"open",klaarOp:k?now():null,nieuw:false});render();if(k)toast("Klaar.")});
-$("#board").addEventListener("focusout",e=>{if(e.target.dataset.a!=="tekst")return;const b=briefje(e.target.closest(".pi").dataset.id);const t=e.target.innerText.trim();if(t&&t!==b.tekst){raak(b,{tekst:t})}else if(!t)e.target.textContent=b.tekst});
+$("#board").addEventListener("change",e=>{const pi=e.target.closest(".pi,.bi");if(!pi)return;const b=briefje(pi.dataset.id);
+  if(e.target.dataset.a==="klaar"){const k=e.target.checked;raak(b,{status:k?"klaar":"open",klaarOp:k?now():null,nieuw:false});render();if(k)toast(isBak(b)?"Uit de bak.":"Klaar.");return}
+  if(e.target.matches(".bDate,.bTime,.bDur")){const p={date:pi.querySelector(".bDate").value||todayStr(),time:pi.querySelector(".bTime").value||"09:00",dur:+pi.querySelector(".bDur").value};raak(b,{plan:p});pi.querySelector("a.lk").href=outlookUrl(b,p);pi.querySelector("[data-a=plan]").textContent=wanneer(p)}});
+$("#board").addEventListener("focusout",e=>{if(e.target.dataset.a!=="tekst")return;const b=briefje(e.target.closest(".pi,.bi").dataset.id);const t=e.target.innerText.trim();if(t&&t!==b.tekst){raak(b,{tekst:t})}else if(!t)e.target.textContent=b.tekst});
 $("#board").addEventListener("keydown",e=>{if(e.target.dataset.a==="tekst"&&e.key==="Enter"&&!e.shiftKey){e.preventDefault();e.target.blur()}
-  if(e.target.dataset.add!=null&&e.key==="Enter"){const v=e.target.value.trim();if(!v)return;const id=e.target.dataset.add;maakBriefjes(splitDump(v),{lijn:id});setTimeout(()=>{const i=$(`[data-add="${CSS.escape(id)}"]`);i&&i.focus()},0)}});
+  if(e.target.dataset.add!=null&&e.key==="Enter"){const v=e.target.value.trim();if(!v)return;const id=e.target.dataset.add,so=e.target.dataset.soort;maakBriefjes(splitDump(v),{lijn:id,soort:so});setTimeout(()=>{const i=$(`[data-add="${CSS.escape(id)}"][data-soort="${so}"]`);i&&i.focus()},0)}});
 $("#weergave").addEventListener("click",e=>{const b=e.target.closest("[data-w]");if(!b)return;setInst("weergave",b.dataset.w);render()});
-$("#los").addEventListener("change",e=>{const li=e.target.closest("li");if(!li)return;const b=briefje(li.dataset.id);raak(b,{lijn:e.target.value});render();toast("Op "+((lijnVan(b.lijn)||{}).naam||"het bord"))});
+$("#los").addEventListener("change",e=>{const li=e.target.closest("li");if(!li)return;const b=briefje(li.dataset.id);raak(b,{lijn:e.target.value});if(isBak(b)){bakOpen.add(b.lijn);bewaarBakOpen()}render();const l=lijnVan(b.lijn);toast(l?(isBak(b)?"In de bak van ":"Op het bord: ")+l.naam:"Terug naar nog te sorteren")});
 $("#nieuw").addEventListener("click",e=>{const a=e.target.closest("[data-a=gezien]");if(!a)return;raak(briefje(a.closest("li").dataset.id),{nieuw:false});render()});
 $("#tbNieuw").onclick=()=>{$("#nieuw").scrollIntoView({behavior:"smooth",block:"center"})};
 $("#lines").addEventListener("click",e=>{const ln=e.target.closest("[data-lijn]");if(!ln)return;const id=ln.dataset.lijn;let st=$(`.stack[data-lijn="${CSS.escape(id)}"]`);
@@ -628,7 +693,7 @@ $("#lines").addEventListener("click",e=>{const ln=e.target.closest("[data-lijn]"
   st.scrollIntoView({behavior:"smooth",block:"center"});st.classList.add("focus");setTimeout(()=>st.classList.remove("focus"),1600);const i=st.querySelector("[data-add]");if(i&&!st.querySelector(".pi"))i.focus({preventScroll:true})});
 // slepen: briefje naar een andere stapel of naar een lijn op de kaart
 let sleep=null;
-document.addEventListener("dragstart",e=>{const pi=e.target.closest&&e.target.closest(".pi");if(!pi)return;if(document.activeElement&&document.activeElement.dataset.a==="tekst"){e.preventDefault();return}sleep=pi.dataset.id;pi.classList.add("drag");e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain",sleep)}catch(_){}});
+document.addEventListener("dragstart",e=>{const pi=e.target.closest&&e.target.closest(".pi,.bi");if(!pi)return;if(document.activeElement&&document.activeElement.dataset.a==="tekst"){e.preventDefault();return}sleep=pi.dataset.id;pi.classList.add("drag");e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain",sleep)}catch(_){}});
 document.addEventListener("dragend",()=>{$$(".drag,.over").forEach(x=>x.classList.remove("drag","over"));sleep=null});
 document.addEventListener("dragover",e=>{const t=e.target.closest&&e.target.closest(".stack,.ln");if(!t||!sleep)return;e.preventDefault();$$(".over").forEach(x=>x!==t&&x.classList.remove("over"));t.classList.add("over")});
 document.addEventListener("drop",e=>{const t=e.target.closest&&e.target.closest(".stack,.ln");if(!t||!sleep)return;e.preventDefault();const b=briefje(sleep);if(b&&b.lijn!==t.dataset.lijn){raak(b,{lijn:t.dataset.lijn});render();toast("Naar "+lijnVan(b.lijn).naam)}});
@@ -664,9 +729,9 @@ function outlookUrl(b,sl){const [s,e]=slotDates(sl);const l=lijnVan(b.lijn);retu
 const icsUtc=dt=>dt.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
 const icsEsc=s=>String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
 function fold(line){const out=[];let s=line;while(s.length>73){out.push(s.slice(0,73));s=" "+s.slice(73)}out.push(s);return out.join("\r\n")}
-function vevent(b){const [s,e]=slotDates(PL().slots[b.id]||standaardSlot(0));const l=lijnVan(b.lijn);
+function vevent(b,sl){const [s,e]=slotDates(sl||PL().slots[b.id]||standaardSlot(0));const l=lijnVan(b.lijn);
   return ["BEGIN:VEVENT","UID:koach-"+b.id+"-"+icsUtc(s)+"@koach.local","DTSTAMP:"+icsUtc(new Date()),"DTSTART:"+icsUtc(s),"DTEND:"+icsUtc(e),"SUMMARY:"+icsEsc(b.tekst),"DESCRIPTION:"+icsEsc("Koach · "+(l?l.naam:"bord")+" · P"+b.prio),"CATEGORIES:"+icsEsc(l?l.naam:"Koach"),"TRANSP:OPAQUE","BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+icsEsc(b.tekst),"TRIGGER:-PT10M","END:VALARM","END:VEVENT"].map(fold)}
-function downloadIcs(bs,name){const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Koach//Bord//NL","CALSCALE:GREGORIAN","METHOD:PUBLISH"];bs.forEach(b=>L.push(...vevent(b)));L.push("END:VCALENDAR");download(L.join("\r\n")+"\r\n",name,"text/calendar;charset=utf-8")}
+function downloadIcs(bs,name,slot){const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Koach//Bord//NL","CALSCALE:GREGORIAN","METHOD:PUBLISH"];bs.forEach(b=>L.push(...vevent(b,slot&&slot(b))));L.push("END:VCALENDAR");download(L.join("\r\n")+"\r\n",name,"text/calendar;charset=utf-8")}
 function download(text,name,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
 const slug=s=>norml(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"taak";
 $("#plan").addEventListener("change",e=>{const row=e.target.closest(".task");if(!row)return;const id=row.dataset.id,b=briefje(id);
@@ -713,7 +778,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#kompas").classL
 $("#kRol").addEventListener("click",e=>{const b=e.target.closest("[data-rol]");if(!b)return;setInst("rol",b.dataset.rol);renderKompas();renderKmini()});
 $("#kToon").oninput=e=>{setInst("toon",+e.target.value);renderKompas();renderKmini()};
 ["#kEerlijk","#kLeider","#kStap","#kLijn"].forEach(s=>$(s).addEventListener("input",bewaarConcept));
-$("#kStapKaart").onclick=()=>{const t=$("#kStap").value.trim();if(!t){toast("Vul eerst één stap in");$("#kStap").focus();return}const lijn=$("#kLijn").value;const[b]=maakBriefjes([t],{lijn:lijn||kiesLijn(t)});raak(b,{prio:1});render();toast("Op het bord, P1")};
+$("#kStapKaart").onclick=()=>{const t=$("#kStap").value.trim();if(!t){toast("Vul eerst één stap in");$("#kStap").focus();return}const lijn=$("#kLijn").value;const[b]=maakBriefjes([t],{lijn:lijn||kiesLijn(t)});raak(b,{prio:1});if(isBak(b)){bakOpen.add(b.lijn);bewaarBakOpen()}render();toast(isBak(b)?"In de bak van "+(lijnVan(b.lijn)||{naam:"…"}).naam+", P1":"Op het bord, P1")};
 $("#kBewaar").onclick=()=>{const e={id:uid(),datum:todayStr(),rol:I().rol,toon:+I().toon,zin:kompasZin(),eerlijk:$("#kEerlijk").value.trim(),leider:$("#kLeider").value.trim(),stap:$("#kStap").value.trim(),gemaakt:now(),bijgewerkt:now()};
   if(!e.eerlijk&&!e.leider&&!e.stap){toast("Schrijf eerst iets, één regel is genoeg");return}
   S.kompas.push(e);save();localStorage.removeItem(CKEY);$("#kEerlijk").value=$("#kLeider").value=$("#kStap").value="";renderKompas();renderKmini();toast("Bewaard in je logboek")};
@@ -737,11 +802,11 @@ $("#tLijnen").addEventListener("click",e=>{const b=e.target.closest('[data-f="we
 $("#sLijnPlus").onclick=()=>{const kl=["#0E7C86","#A23B72","#3D5A80","#F18F01","#4C956C"][S.lijnen.length%5];S.lijnen.push({id:"l-"+uid(),naam:"Nieuwe lijn",kleur:kl,bot:"Zelf",link:"",woorden:"",volgorde:Math.max(0,...S.lijnen.map(l=>l.volgorde))+1,archief:false,bijgewerkt:now()});save();renderTabel();render();const i=$("#tLijnen tr:last-child [data-f=naam]");i.focus();i.select()};
 function openInst(focusSync){const c=Sync.cfg||{};const q=new URLSearchParams(location.search);
   $("#sRepo").value=c.repo||q.get("repo")||STANDAARD_REPO;$("#sPath").value=c.path||q.get("file")||STANDAARD_BESTAND;$("#sToken").value="";$("#sToken").placeholder=c.token?"•••••••• (opgeslagen op dit apparaat)":"github_pat_…";
-  const api=c.api||q.get("api")||"";$("#sApiWrap").hidden=!api;$("#sApi").value=api;$("#sNaam").value=I().naam||"";
+  const api=c.api||q.get("api")||"";$("#sApiWrap").hidden=!api;$("#sApi").value=api;$("#sNaam").value=I().naam||"";$("#sNaam").dataset.org=$("#sNaam").value;
   $("#sStatus").textContent=Sync.cfg?syncTekst():"Nog niet gekoppeld. Het bord staat nu alleen in deze browser.";$("#sStatus").className="status";
   renderTabel();$("#dlgInst").showModal();if(focusSync===true)$("#sRepo").focus()}
 $("#tbInst").onclick=openInst;$("#sync").onclick=()=>openInst(true);
-$("#sOk").onclick=()=>{const n=$("#sNaam").value.trim();if(n!==I().naam)setInst("naam",n);$("#dlgInst").close();render()};
+$("#sOk").onclick=()=>{const n=$("#sNaam").value.trim();if($("#sNaam").dataset.org!==n&&n!==I().naam)setInst("naam",n);$("#dlgInst").close();render()};
 $("#sExport").onclick=$("#lnkExport").onclick=()=>{download(JSON.stringify(S,null,2),"koach-backup-"+todayStr()+".json","application/json");toast("Back-up gedownload (zonder sleutel)")};
 $("#sImport").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.briefjes))throw 0;S=merge(S,d);save();render();toast("Back-up samengevoegd met je bord")}catch(err){toast("Dit bestand kan Koach niet lezen")}e.target.value=""};
 function renderArch(){const a=S.briefjes.filter(b=>!b.weg&&(b.archief||(b.status==="klaar"&&!vandaagKlaar(b)))).sort((x,y)=>(y.bijgewerkt||0)-(x.bijgewerkt||0));
