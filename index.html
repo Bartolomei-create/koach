@@ -432,7 +432,7 @@ const p2=n=>String(n).padStart(2,"0");
 const ymd=d=>d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
 const todayStr=()=>ymd(new Date());
 function weekKey(d=new Date()){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return t.getUTCFullYear()+"-W"+p2(Math.ceil(((t-y)/864e5+1)/7))}
-const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">",'"':""","'":"&#39;"}[c]));
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
 const icon=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
 const now=()=>Date.now();
 const STANDAARD_REPO="Bartolomei-create/koach-data", STANDAARD_BESTAND="board.json";
