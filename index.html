@@ -346,6 +346,22 @@ dialog.wide{width:min(860px,96vw)}
 .cqopen{color:var(--c);font-weight:700;text-decoration:none;font-size:12px;white-space:nowrap}.cqopen:hover{text-decoration:underline}
 .cqaf{font-weight:700}.cqafok{color:#2E7D32;font-weight:700}.stack.cqk.af{opacity:.6}.cqt.af{opacity:.55}.cqt.af .tn{text-decoration:line-through}
 .cqteller{font-weight:700;color:var(--ink)}.cqundo{display:flex;align-items:center;gap:8px;margin:6px 0 8px;padding:6px 10px;border:1px solid #2E7D32;border-radius:4px;background:#F1F8F1;font-size:12.5px}.cqundo b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board.tegelbord{columns:auto;display:block}.board.tegelbord>.stack.ouder{margin-bottom:14px}
+.kaarttoel{font-size:12.5px;color:var(--soft);margin:0 0 10px;line-height:1.45;word-break:break-word}.kaarttoel a{color:var(--ink)}
+.tegels{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.tegel{position:relative;background:#fff;border:1px solid var(--line);border-top:5px solid var(--c);border-radius:6px;padding:9px 10px 8px;display:flex;flex-direction:column;gap:6px;min-height:118px;cursor:pointer;box-shadow:0 1px 0 rgba(0,0,0,.04);transition:box-shadow .12s,transform .12s;-webkit-tap-highlight-color:transparent}
+.tegel:hover{box-shadow:0 4px 14px rgba(0,0,0,.09)}.tegel:active{transform:scale(.99)}.tegel:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+.tegel .tk{display:flex;align-items:flex-start;gap:6px;padding-left:12px;position:relative}.tegel .tk .nm{font-weight:700;font-size:14.5px;line-height:1.2;flex:1;min-width:0;word-break:break-word}
+.tegel .tk .sgrip{position:absolute;left:-2px;top:0;width:12px;cursor:grab;color:var(--soft);font-size:11px;line-height:18px;touch-action:none;user-select:none;-webkit-user-select:none;opacity:.7}
+.tegel .tk .hern{border:0;background:transparent;color:var(--soft);font-size:12px;padding:0 2px;opacity:.6;cursor:pointer}.tegel .tk .hern:hover{opacity:1}
+@media (hover:hover){.tegel .tk .hern{visibility:hidden}.tegel:hover .tk .hern,.tegel:focus-within .tk .hern{visibility:visible}}
+.tegel .tt{font-family:var(--mono);font-size:11px;color:var(--soft)}.tegel .tt b{color:var(--ink)}
+.tegel .tb{font-size:12.5px;line-height:1.35;color:var(--ink);background:#F7F6F3;border-left:3px solid var(--c);border-radius:3px;padding:5px 7px;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tegel .tb .lbl{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}.tegel .tb.leeg{color:var(--soft);background:transparent;border-left-color:var(--line)}
+.tegel .tv{display:flex;align-items:center;gap:6px}.tegel .tv .pijl{margin-left:auto;color:var(--c);font-size:15px}
+.tegel.over{box-shadow:0 0 0 2px var(--c)}.tegel .tk.kaartvoor{box-shadow:inset 0 3px 0 var(--c)}
+.tegel.nieuw{cursor:default;border-style:dashed;border-top-style:dashed;background:transparent;min-height:0;justify-content:center}.tegel.nieuw input{border:0;background:transparent;font:inherit;font-size:13px;padding:6px 2px;width:100%}
+@media (max-width:760px){.tegels{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.tegel{min-height:112px}.tegel .tk .nm{font-size:13.5px}}
 .stack.nieuwestapel{border-top-style:dashed;min-height:0;padding-top:8px;background:transparent}
 .cqlaag{margin-top:6px}
 .cqh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px;padding-top:12px;border-top:2px solid var(--line)}.cqh .sp{flex:1}
@@ -440,7 +456,7 @@ dialog.wide{width:min(860px,96vw)}
     <div class="bordh">
       <h1 id="bordTitel">Bord</h1><span class="stats" id="stats"></span><span class="sp"></span>
       <button class="btn sm pri" id="btnBoven" title="Pak van elke stapel het bovenste briefje en geef het een tijdblok"><svg class="i"><use href="#i-cal"/></svg>Plan de bovenste</button>
-      <div class="seg" id="weergave"><button data-w="alles">Alle lijnen</button><button data-w="actief">Met briefjes</button></div>
+      <div class="seg" id="bordvorm" aria-label="Weergave van het bord"><button data-vorm="tegels">Kaarten</button><button data-vorm="stapels">Stapels</button></div><div class="seg" id="weergave"><button data-w="alles">Alle lijnen</button><button data-w="actief">Met briefjes</button></div>
     </div>
     <nav class="kruimel" id="kruimel" hidden aria-label="Laag"></nav>
     <section class="tafel" id="tafel" aria-label="Tafel">
@@ -794,11 +810,8 @@ function biHtml(b,nr){const l=lijnVan(b.lijn);const botNaam=l&&!isZelf(l.bot)?l.
 function standaardBakSlot(dur=30){const d=new Date();const h=Math.min(Math.max(d.getHours()+1,9),17);return{date:todayStr(),time:p2(h)+":00",dur}}
 const nummer=list=>{let n=0;return list.map(b=>[b,b.status==="klaar"?0:++n])};
 
-function renderBord(){
-  const w=I().weergave||"alles";$$("#weergave [data-w]").forEach(x=>x.classList.toggle("on",x.dataset.w===w));
-  const live=levend();
-  renderKruimel();const stapels=stapelsInLaag();
-  $("#board").innerHTML=stapels.map(l=>{const bs=sorteerBord(live.filter(b=>b.lijn===l.id&&isOnd(b)&&zichtbaar(b)));const open=bs.filter(b=>b.status!=="klaar").length;
+// Eén kaart als stapel (lijst met onderwerpen en bak). In de tegelweergave is dit de kaart zelf, bovenaan zijn eigen bord.
+function stapelHtml(l,live,w){const bs=sorteerBord(live.filter(b=>b.lijn===l.id&&isOnd(b)&&zichtbaar(b)));const open=bs.filter(b=>b.status!=="klaar").length;
     const bak=sorteerBord(bakVan(l.id));const nb=bakOpenTeller(l.id);const isOpen=bakOpen.has(l.id);
     const lt=laagTeller(l.id);const isOuder=laag&&l.id===laag;
     if(w==="actief"&&!bs.length&&!nb&&!lt.heeft&&!isOuder)return"";
@@ -808,7 +821,28 @@ function renderBord(){
      <div class="cards" data-soort="onderwerp">${nummer(bs).map(([b,n])=>piHtml(b,n)).join("")}</div>
      <div class="add"><input placeholder="+ onderwerp" data-add="${esc(l.id)}" data-soort="onderwerp" aria-label="Nieuw onderwerp op ${esc(l.naam)}"></div>
      <div class="bakrij ${isOpen?"open":""}"><button class="bakbtn ${isOpen?"open":""}" data-bak="${esc(l.id)}" aria-expanded="${isOpen}"><span>Bak</span><b class="${nb?"":"nul"}">${nb}</b><span class="sp"></span><span class="pijl">${isOpen?"▴":"▾"}</span></button>${bovenste(l.id,"bak")||bovenste(l.id,"onderwerp")||(!isOuder&&bovensteDiep(l.id))?`<button class="pak" data-pak="${esc(l.id)}" title="Pak het bovenste briefje van deze stapel en geef het een tijdblok">${icon("cal")}Pak bovenste</button>`:""}</div>
-     ${isOpen?`<div class="bak" data-soort="bak">${nummer(bak).map(([b,n])=>biHtml(b,n)).join("")||`<div class="leegtxt">Leeg gespeeld.</div>`}<div class="add"><input placeholder="+ in de bak" data-add="${esc(l.id)}" data-soort="bak" aria-label="Nieuw in de bak van ${esc(l.naam)}"></div></div>`:""}</section>`}).join("")+`<section class="stack nieuwestapel" style="--c:${esc(laag?kleur(laag):"#9B9B97")}"><div class="add"><input data-nieuwestapel="${esc(laag)}" placeholder="${laag?"+ kaart in "+esc((lijnVan(laag)||{}).naam||""):"+ kaart (rubriek)"}" aria-label="${laag?"Nieuwe kaart in deze laag":"Nieuwe kaart bovenaan"}"></div>${!laag&&!stapels.length?`<p class="hint">Nog geen kaarten. Maak je eerste rubriek, bijvoorbeeld Werk of Thuis.</p>`:""}</section>`;
+     ${isOpen?`<div class="bak" data-soort="bak">${nummer(bak).map(([b,n])=>biHtml(b,n)).join("")||`<div class="leegtxt">Leeg gespeeld.</div>`}<div class="add"><input placeholder="+ in de bak" data-add="${esc(l.id)}" data-soort="bak" aria-label="Nieuw in de bak van ${esc(l.naam)}"></div></div>`:""}</section>`}
+// Eén kaart als tegel: naam, open briefjes, kaarten eronder en het bovenste briefje. Tik = de kaart opent als eigen bord.
+function tegelHtml(l,live){const ids=new Set([l.id,...nakomelingen(l.id).map(k=>k.id)]);const open=live.filter(b=>ids.has(b.lijn)&&b.status!=="klaar").length;const kids=kinderen(l.id).length;
+  const cq=l.id===cirqllLijn()?cqTellers():null;const top=bovensteDiep(l.id);const tl=top?lijnVan(top.lijn):null;
+  const delen=[`<b>${open}</b> open`];if(kids)delen.push(kids+(kids===1?" kaart":" kaarten"));if(cq&&cq.klanten)delen.push("Cirqll "+cq.open);
+  return `<section class="tegel" style="--c:${esc(l.kleur)}" data-lijn="${esc(l.id)}" data-tegel="${esc(l.id)}" tabindex="0" role="button" aria-label="Open ${esc(l.naam)}">
+   <div class="tk"><span class="sgrip" data-kaartgrip="${esc(l.id)}" title="Kaart slepen: op een kop = ervoor, op een kaart = erin" aria-label="Kaart ${esc(l.naam)} slepen">⠿</span><span class="nm" data-hernoem="${esc(l.id)}">${esc(l.naam)}</span><button class="hern" data-hernoemknop="${esc(l.id)}" title="Hernoemen" aria-label="Kaart ${esc(l.naam)} hernoemen">✎</button></div>
+   <div class="tt">${delen.join(" · ")}${cq&&cq.telaat?` · <b class="rood">${cq.telaat} te laat</b>`:""}</div>
+   <div class="tb ${top?"":"leeg"}">${top?`<span class="lbl">Bovenop${tl&&tl.id!==l.id?" · "+esc(tl.naam):""}</span>${esc(top.tekst)}`:"Nog leeg"}</div>
+   <div class="tv">${botLabel(l)}<span class="pijl">▸</span></div></section>`}
+const bordVorm=()=>I().bordvorm==="stapels"?"stapels":"tegels";
+const linkify=t=>esc(t).replace(/https?:\/\/[^\s<]+/g,u=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${u.length>48?u.slice(0,47)+"…":u}</a>`);
+function renderBord(){
+  const w=I().weergave||"alles";$$("#weergave [data-w]").forEach(x=>x.classList.toggle("on",x.dataset.w===w));
+  const vorm=bordVorm();$$("#bordvorm [data-vorm]").forEach(x=>x.classList.toggle("on",x.dataset.vorm===vorm));$("#weergave").hidden=vorm==="tegels";
+  const live=levend();
+  renderKruimel();const stapels=stapelsInLaag();const bd=$("#board");bd.classList.toggle("tegelbord",vorm==="tegels");
+  const nieuw=`<section class="stack nieuwestapel" style="--c:${esc(laag?kleur(laag):"#9B9B97")}"><div class="add"><input data-nieuwestapel="${esc(laag)}" placeholder="${laag?"+ kaart in "+esc((lijnVan(laag)||{}).naam||""):"+ kaart (rubriek)"}" aria-label="${laag?"Nieuwe kaart in deze laag":"Nieuwe kaart bovenaan"}"></div>${!laag&&!stapels.length?`<p class="hint">Nog geen kaarten. Maak je eerste rubriek, bijvoorbeeld Werk of Thuis.</p>`:""}</section>`;
+  if(vorm==="tegels"){const ouder=laag?lijnVan(laag):null;const kids=laag?kinderen(laag):actieveLijnen().filter(l=>!ouderVan(l));
+    bd.innerHTML=(ouder&&ouder.toelichting?`<div class="kaarttoel">${linkify(ouder.toelichting).replace(/\n/g,"<br>")}</div>`:"")+(ouder?stapelHtml(ouder,live,"alles"):"")+
+      `<div class="tegels">${kids.map(l=>tegelHtml(l,live)).join("")}<div class="tegel nieuw" style="--c:${esc(ouder?ouder.kleur:"#9B9B97")}"><input data-nieuwestapel="${esc(laag)}" placeholder="${laag?"+ kaart in "+esc(ouder.naam):"+ kaart (rubriek)"}" aria-label="${laag?"Nieuwe kaart in deze laag":"Nieuwe kaart bovenaan"}">${!kids.length?`<p class="hint">${laag?"Nog geen kaarten hierin.":"Nog geen kaarten. Maak je eerste rubriek, bijvoorbeeld Werk of Thuis."}</p>`:""}</div></div>`}
+  else bd.innerHTML=stapels.map(l=>stapelHtml(l,live,w)).join("")+nieuw;
   renderCirqllLaag();
   const ond=live.filter(b=>isOnd(b)&&b.lijn&&b.status!=="klaar").length,bak=live.filter(b=>isBak(b)&&b.lijn&&b.status!=="klaar").length,bot=live.filter(b=>b.status==="bot").length,klaar=live.filter(vandaagKlaar).length;
   $("#stats").textContent=`${ond} onderwerpen · ${bak} in de bakken · ${bot} bij bots · ${klaar} klaar vandaag`;
@@ -860,6 +894,10 @@ $("#los").addEventListener("keydown",e=>{if(e.target.dataset.a==="tekst"&&e.key=
 $("#board").addEventListener("keydown",e=>{if(e.target.dataset.a==="tekst"&&e.key==="Enter"&&!e.shiftKey){e.preventDefault();e.target.blur()}
   if(e.target.dataset.add!=null&&e.key==="Enter"){const v=e.target.value.trim();if(!v)return;const id=e.target.dataset.add,so=e.target.dataset.soort;maakBriefjes(splitDump(v),{lijn:id,soort:so});setTimeout(()=>{const i=$(`[data-add="${CSS.escape(id)}"][data-soort="${so}"]`);i&&i.focus()},0)}});
 $("#weergave").addEventListener("click",e=>{const b=e.target.closest("[data-w]");if(!b)return;setInst("weergave",b.dataset.w);render()});
+$("#bordvorm").addEventListener("click",e=>{const b=e.target.closest("[data-vorm]");if(!b)return;setInst("bordvorm",b.dataset.vorm);render()});
+// Tik of klik op een tegel: die kaart opent als eigen bord (een laag dieper). Knoppen, grijpertje en invoer doen hun eigen ding.
+$("#board").addEventListener("click",e=>{const t=e.target.closest(".tegel[data-tegel]");if(!t||kaartNetGesleept||e.target.closest("button,input,a,select,textarea,.sgrip,[contenteditable]"))return;e.stopPropagation();gaNaarLaag(t.dataset.tegel)});
+$("#board").addEventListener("keydown",e=>{const t=e.target.closest(".tegel[data-tegel]");if(!t||e.target!==t||(e.key!=="Enter"&&e.key!==" "))return;e.preventDefault();gaNaarLaag(t.dataset.tegel)});
 $("#nieuw").addEventListener("click",e=>{const a=e.target.closest("[data-a=gezien]");if(!a)return;raak(briefje(a.closest("li").dataset.id),{nieuw:false});render()});
 $("#tbNieuw").onclick=()=>{$("#nieuw").scrollIntoView({behavior:"smooth",block:"center"})};
 $("#lines").addEventListener("click",e=>{const ln=e.target.closest("[data-lijn]");if(!ln)return;const id=ln.dataset.lijn;let st=$(`.stack[data-lijn="${CSS.escape(id)}"]`);
@@ -1066,7 +1104,7 @@ $("#board").addEventListener("keydown",e=>{const i=e.target.closest("[data-nieuw
   const l=maakKaart(naam,i.dataset.nieuwestapel||"");if(!l)return;const ouder=lijnVan(l.parent);
   toast("Kaart "+naam+(ouder?" in "+ouder.naam:" bovenaan"));setTimeout(()=>{const n=$("[data-nieuwestapel]");n&&n.focus()},0)});
 // Hernoemen: dubbelklik op de naam of het potloodje; Enter bewaart, Escape annuleert.
-function startHernoem(id){const nm=$(`.stack[data-lijn="${CSS.escape(id)}"] .sh .nm`);const l=lijnVan(id);if(!nm||!l)return;
+function startHernoem(id){const nm=$(`#board [data-lijn="${CSS.escape(id)}"] [data-hernoem]`);const l=lijnVan(id);if(!nm||!l)return;
   nm.innerHTML=`<input class="hernoem" value="${esc(l.naam)}" aria-label="Nieuwe naam voor ${esc(l.naam)}">`;const inp=nm.querySelector("input");inp.focus();inp.select();let klaar=false;
   const af=ok=>{if(klaar)return;klaar=true;if(!(ok&&hernoemKaart(id,inp.value)))render(true)};
   inp.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter")af(true);else if(e.key==="Escape")af(false)});inp.addEventListener("blur",()=>af(true))}
@@ -1074,16 +1112,17 @@ $("#board").addEventListener("dblclick",e=>{const n=e.target.closest("[data-hern
 $("#board").addEventListener("click",e=>{const n=e.target.closest("[data-hernoemknop]");if(n){e.stopPropagation();startHernoem(n.dataset.hernoemknop)}});
 // Kaart slepen aan het grijpertje (muis en touch): op de kop van een kaart = ervoor, ergens anders op een kaart = erin,
 // op de lijnenkaart = erin, op het kruimelpad = naar die laag.
-let ks=null;
+let ks=null,kaartNetGesleept=false;
 function kaartDoel(x,y){const el=document.elementFromPoint(x,y);if(!el||!ks)return null;
   const kr=el.closest("#kruimel [data-gaan]");if(kr&&!kr.classList.contains("terug"))return{in:kr.dataset.gaan,hl:kr};
   const ln=el.closest("#lines .ln");if(ln)return ln.dataset.lijn===ks.id?null:{in:ln.dataset.lijn,hl:ln};
+  const tg=el.closest(".tegel[data-tegel]");if(tg){if(tg.dataset.tegel===ks.id)return null;return el.closest(".tk")?{voor:tg.dataset.tegel,hl:tg.querySelector(".tk"),kop:true}:{in:tg.dataset.tegel,hl:tg}}
   const st=el.closest(".stack:not(.nieuwestapel)");if(!st||st.dataset.lijn===ks.id)return null;const id=st.dataset.lijn;
   if(st.classList.contains("ouder"))return{in:id,hl:st};
   return el.closest(".sh")?{voor:id,hl:st.querySelector(".sh"),kop:true}:{in:id,hl:st}}
 function kaartNaar(x,y){if(!ks)return;ks.ghost.style.transform=`translate(${x+8}px,${y+8}px)`;$$(".over,.kaartvoor").forEach(z=>z.classList.remove("over","kaartvoor"));
   const d=kaartDoel(x,y);ks.doel=d&&(d.in!=null?!(d.in===ks.id||(d.in&&nakomelingen(ks.id).some(k=>k.id===d.in))):!nakomelingen(ks.id).some(k=>k.id===d.voor))?d:null;if(ks.doel)ks.doel.hl.classList.add(ks.doel.kop?"kaartvoor":"over")}
-function kaartEind(ok){if(!ks)return;const s=ks;ks=null;s.ghost.remove();document.body.classList.remove("slepen");$$(".over,.kaartvoor").forEach(z=>z.classList.remove("over","kaartvoor"));
+function kaartEind(ok){if(!ks)return;const s=ks;ks=null;kaartNetGesleept=true;setTimeout(()=>kaartNetGesleept=false,0);s.ghost.remove();document.body.classList.remove("slepen");$$(".over,.kaartvoor").forEach(z=>z.classList.remove("over","kaartvoor"));
   if(!ok||!s.doel)return;const d=s.doel;const l=lijnVan(s.id);if(verplaatsKaart(s.id,d.voor?{voor:d.voor}:{in:d.in})){const t=lijnVan(d.voor||d.in);toast(d.voor?l.naam+" vóór "+t.naam:l.naam+(t?" in "+t.naam:" bovenaan"))}}
 document.addEventListener("pointerdown",e=>{const g=e.target.closest&&e.target.closest("[data-kaartgrip]");if(!g||ks||e.pointerType==="mouse"&&e.button!==0)return;e.preventDefault();e.stopPropagation();
   const l=lijnVan(g.dataset.kaartgrip);if(!l)return;const gh=document.createElement("div");gh.className="kaartkloon";gh.style.setProperty("--c",l.kleur);gh.textContent=l.naam;document.body.appendChild(gh);
@@ -1199,6 +1238,7 @@ function vindDoel(x,y){const el=document.elementFromPoint(x,y);if(!el)return nul
   const kr=el.closest("#kruimel [data-lijn]");if(kr)return{zone:"lijn",lijn:kr.dataset.lijn,hl:kr};
   const tf=el.closest("#tafel");if(tf)return{zone:"tafel",hl:tf};
   const ln=el.closest("#lines .ln");if(ln)return{zone:"lijn",lijn:ln.dataset.lijn,hl:ln};
+  const tg=el.closest(".tegel[data-tegel]");if(tg)return{zone:"lijn",lijn:tg.dataset.tegel,hl:tg};
   const st=el.closest(".stack");if(!st)return null;const lijn=st.dataset.lijn;
   const bak=el.closest(".bak");if(bak)return lijstDoel(bak,".bi",lijn,"bak",y,bak);
   if(el.closest(".bakbtn"))return{zone:"lijst",lijn,soort:"bak",hl:st.querySelector(".bakbtn"),eind:true};
