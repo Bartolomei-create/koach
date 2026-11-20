@@ -336,6 +336,12 @@ dialog.wide{width:min(860px,96vw)}
 .laagbtn .pijl{color:var(--c);font-size:14px}.laagbtn:hover{background:#FBFBF9}
 .ln .bot .lg{font-family:var(--mono);color:var(--c);margin-right:4px;cursor:pointer}
 .stack.ouder{background:#FFFFFF;border-style:dashed}.stack .sh .nm small{display:block;font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+.stack .sh{position:relative}.stack .sh .sgrip{position:absolute;left:0;top:6px;width:10px;height:20px;text-align:center;overflow:hidden;cursor:grab;color:var(--soft);font-size:11px;line-height:20px;touch-action:none;user-select:none;-webkit-user-select:none;opacity:.7}.stack .sh .sgrip:hover{opacity:1;color:var(--c)}
+.stack .sh .hern{border:0;background:transparent;color:var(--soft);font-size:12px;padding:0 2px;opacity:.6;cursor:pointer}.stack .sh .hern:hover{opacity:1}
+@media (hover:hover){.stack .sh .hern{display:none}.stack:hover .sh .hern,.stack:focus-within .sh .hern{display:inline-block}}
+.stack .sh .nm input.hernoem{font:inherit;width:100%;border:1px solid var(--c);border-radius:3px;padding:1px 4px}
+.stack .sh.kaartvoor{box-shadow:inset 0 3px 0 var(--c)}
+.kaartkloon{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;background:#fff;border:1px solid var(--c);border-left:5px solid var(--c);border-radius:4px;padding:6px 10px;font-weight:700;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .stack.nieuwestapel{border-top-style:dashed;min-height:0;padding-top:8px;background:transparent}
 .cqlaag{margin-top:6px}
 .cqh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px;padding-top:12px;border-top:2px solid var(--line)}.cqh .sp{flex:1}
@@ -554,22 +560,13 @@ function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");cl
 /* ============ Lijnen (onderwerpen) met de bot erachter ============ */
 // Chatlinks naar de bots staan in je privé board.json (Instellingen → Lijnen en bots), niet in deze openbare code.
 const BOT={};
-const STANDAARD=[
- ["admin","Administratie op orde","#2E8B57","I GroBot","administratie,boekhouding,accountant,exact,belasting,belastingaangifte,aangifte,btw,bon,bonnetje,bonnetjes,bonnen,kassabon,declaratie,declareren,revolut,uitgave,inkoopfactuur,bank,betalen,geldstroom,budget,verzekering,lening,pensioen,firm24,bv,kvk,statuten,holding,aandeelhouder"],
- ["klanten","Klanten & CRM","#D7263D","Cirqll","klant,klanten,crm,cirqll,adviesgesprek,terugbellen,lead,intake,hypotheek,afspraak,afspraken,bookings,agenda"],
- ["offertes","Offertes & facturatie","#F28C28","Nmbrs","offerte,offertes,factuur,facturen,facturatie,nmbrs,mollie,abonnement,herinnering,debiteur"],
- ["dossiers","Dossiers","#1F5AA6","Blouwdruk Dossiers","dossier,dossiers,taxatie,taxateur,notaris,stukken,aanvraag,gegevensdelen,aho,akte"],
- ["box","Archief SharePoint → Box","#3A9AD9","Box","box,archief,sharepoint,onedrive,map,mappen,scannen,documenten"],
- ["blik","Blikmeester","#E3B505","I GroBot","blikmeester,teleprompter,opname,opnemen,cursus,ondernemers,module"],
- ["vastgoed","Vastgoed privé","#8B5A2B","I GroBot","vastgoed,huurder,huurders,verhuur,pand,appartement,huurcontract,vve"],
- ["huis","Huis & thuis","#6B7780","Zelf","kliko,boodschappen,huis,thuis,tuin,schoonmaken,klusje,klussen,verbouwing,energie,wasmachine,auto,apk"],
- ["kids","Kids","#EC6FA5","Zelf","kids,kinderen,school,ophalen,brengen,zwemles,oppas,verjaardag,juf"],
- ["sport","Sport & ritme","#9B8BD8","Zelf","sport,sporten,gym,hardlopen,fietsen,training,trainen,slapen,slaap,tandarts,huisarts,wandelen"],
- ["koach","Koach / Pinkoach","#111111","Zelf","koach,pinkoach,bord,dashboard,grokbot,cursor,bots"],
- ["social","Marketing & social","#C2185B","Social","linkedin,instagram,social,post,posten,website,framer,marketing,nieuwsbrief,video,content"]
-];
+// Een nieuw, leeg bord begint zonder kaarten: de gebruiker maakt zijn eigen rubrieken (kaarten) en lagen eronder.
+// Alles wat iemand eigen is (rubrieken, bots, chatlinks, woorden) staat in zijn board.json, nooit in deze openbare code.
+const STANDAARD=[];
 // Oude lijnen (v2) gaan op in de nieuwe indeling. Niets gaat verloren: de lijn wordt gearchiveerd, de briefjes verhuizen.
+// Ontbreekt de doel-lijn, dan maakt Koach een neutrale kaart met die naam.
 const OUDE_LIJN={geld:"admin",bonnetjes:"admin",bv:"admin",agenda:"klanten"};
+const OUD_DOEL={admin:"Administratie",klanten:"Klanten"};
 // Structureel = iets inrichten, op orde brengen, opzetten. Dat is een onderwerp op het bord. De rest is operationeel en gaat in de bak.
 const STRUCTUREEL=/(^|\s)(\+\+|onderwerp:)|\b(inrichten|inrichting|instellen|opzetten|opzet|op orde|regelen|structuur|systeem|systemen|proces|werkwijze|routine|koppelen|koppeling|migreren|migratie|overzetten|overhevelen|automatiseren|toegang|bij krijgen|bijwerken|completeren|uitzoeken|strategie|herzien|opbouwen|bouwen|implementeren|setup|fixen|leeg spelen)\b/i;
 function kiesSoort(t){return STRUCTUREEL.test(String(t))?"onderwerp":"bak"}
@@ -592,7 +589,11 @@ function norm(x){
     planning:x.planning&&typeof x.planning==="object"?x.planning:{},
     kompas:(Array.isArray(x.kompas)?x.kompas:[]).map(k=>Object.assign({id:"k-"+hsh(JSON.stringify(k)),gemaakt:0,bijgewerkt:0},k))};
   for(const l of s.lijnen)if(OUDE_LIJN[l.id]!=null)l.archief=true;
-  for(const l of standaardLijnen())if(!s.lijnen.some(x=>x.id===l.id))s.lijnen.push(l);
+  // De data is leidend: een bestaand bord houdt precies zijn eigen lijnen en lagen (bijv. zes rubrieken bovenaan).
+  // Een standaardlijn komt er alleen bij als een briefje ernaar verwijst en hij ontbreekt (migratie van oude lijnen).
+  const nodig=new Set(s.briefjes.map(b=>b.lijn));
+  for(const l of standaardLijnen())if(nodig.has(l.id)&&!s.lijnen.some(x=>x.id===l.id))s.lijnen.push(l);
+  for(const [id,naam] of Object.entries(OUD_DOEL))if(nodig.has(id)&&!s.lijnen.some(x=>x.id===id))s.lijnen.push({id,naam,kleur:"#5B6C8F",bot:"Zelf",link:"",woorden:"",volgorde:50,archief:false,parent:"",bijgewerkt:0});
   s.lijnen.sort((a,c)=>(a.volgorde-c.volgorde)||(a.id<c.id?-1:1));
   s.briefjes.sort((a,c)=>(a.gemaakt-c.gemaakt)||(a.id<c.id?-1:a.id>c.id?1:0));
   s.kompas.sort((a,c)=>(a.gemaakt-c.gemaakt)||(a.id<c.id?-1:1));
@@ -609,7 +610,8 @@ function merge(lok,ver){
 function canon(v){if(Array.isArray(v))return"["+v.map(canon).join(",")+"]";if(v&&typeof v==="object")return"{"+Object.keys(v).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}";return JSON.stringify(v===undefined?null:v)}
 
 function migreerV1(){try{const o=JSON.parse(localStorage.getItem("koach.v1"));if(!o||!Array.isArray(o.cards))return null;const s=leeg();
-  const cat={Thuis:"huis",Gezondheid:"sport"},pr={hoog:1,middel:2,laag:3};
+  const pr={hoog:1,middel:2,laag:3},cats=[...new Set(o.cards.filter(c=>c.text&&c.cat).map(c=>String(c.cat)))],kl=["#3D5A80","#4C956C","#A23B72","#F18F01","#0E7C86"];
+  const cat={};cats.forEach((c,i)=>{cat[c]="l-"+hsh(c);s.lijnen.push({id:cat[c],naam:c,kleur:kl[i%5],bot:"Zelf",link:"",woorden:c.toLowerCase(),volgorde:i+1,archief:false,parent:"",bijgewerkt:0})});
   s.briefjes=o.cards.filter(c=>c.text).map(c=>normBriefje({id:c.id||uid(),tekst:c.text,lijn:cat[c.cat]||"",prio:pr[c.prio]||2,status:c.done?"klaar":"open",archief:!!c.archived,gemaakt:c.created||now(),bijgewerkt:now(),klaarOp:c.doneAt||null}));
   return s}catch(e){return null}}
 function laad(){try{const r=localStorage.getItem(KEY);if(r)return norm(JSON.parse(r))}catch(e){}return norm(migreerV1()||leeg())}
@@ -624,8 +626,8 @@ const actieveLijnen=()=>S.lijnen.filter(l=>!l.archief);
 /* Lagen: een lijn met "parent" is een stapel ín die lijn (een laag dieper). Ontbreekt de ouder of is hij gearchiveerd, of loopt het rond, dan staat hij gewoon bovenaan. */
 function ouderVan(l){if(!l||!l.parent)return"";const seen=new Set([l.id]);let p=lijnVan(l.parent);while(p){if(p.archief||seen.has(p.id))return"";seen.add(p.id);if(!p.parent)return l.parent;p=lijnVan(p.parent)}return""}
 const kinderen=id=>actieveLijnen().filter(l=>ouderVan(l)===id);
-function nakomelingen(id){const out=[];const loop=i=>{for(const k of kinderen(i)){out.push(k);if(out.length<200)loop(k.id)}};loop(id);return out}
-function pad(id){const out=[];let l=lijnVan(id);while(l&&out.length<10){out.unshift(l);const o=ouderVan(l);l=o?lijnVan(o):null}return out}
+function nakomelingen(id){const out=[];const loop=i=>{for(const k of kinderen(i)){out.push(k);if(out.length<2000)loop(k.id)}};loop(id);return out}
+function pad(id){const out=[];let l=lijnVan(id);while(l&&out.length<64){out.unshift(l);const o=ouderVan(l);l=o?lijnVan(o):null}return out}
 const levend=()=>S.briefjes.filter(b=>!b.archief&&!b.weg);
 const briefje=id=>S.briefjes.find(b=>b.id===id);
 function raak(b,patch){Object.assign(b,patch,{bijgewerkt:now()});save()}
@@ -742,7 +744,7 @@ function planRij(b,p){const l=lijnVan(b.lijn);const botNaam=l&&!isZelf(l.bot)?l.
     <button class="lk" data-a="ics" title="Download als afspraak (.ics)">.ics</button><a class="lk" target="_blank" rel="noopener noreferrer" href="${esc(outlookUrl(b,p))}">Outlook</a>
     ${isBak(b)&&botNaam&&b.status!=="klaar"?`<button class="lk" data-a="bot">${b.status==="bot"?"Terug van "+esc(botNaam):"→ "+esc(botNaam)}</button>`:""}${isBak(b)?`<button class="lk" data-a="omhoog" title="Is dit eigenlijk een groot onderwerp?">↑ bord</button><button class="lk" data-a="arch">Archief</button>`:""}${b.plan?`<button class="x" data-a="ontplan" title="Uit de agenda halen">✕</button>`:""}</div>`}
 const duurOpties=d=>[15,25,30,45,60,90,120].map(m=>`<option value="${m}" ${m===+d?"selected":""}>${m<60?m+" min":String(m/60).replace(".",",")+" u"}</option>`).join("");
-function lijnenBoom(){const out=[];const loop=(id,d)=>{for(const l of actieveLijnen().filter(x=>ouderVan(x)===id)){out.push([l,d]);if(d<6)loop(l.id,d+1)}};loop("",0);return out}
+function lijnenBoom(){const out=[];const loop=(id,d)=>{for(const l of actieveLijnen().filter(x=>ouderVan(x)===id)){out.push([l,d]);if(d<64)loop(l.id,d+1)}};loop("",0);return out}
 function lijnOpties(sel,leeg="Nog te sorteren"){return `<option value="">${esc(leeg)}</option>`+lijnenBoom().map(([l,d])=>`<option value="${esc(l.id)}" ${l.id===sel?"selected":""}>${"— ".repeat(d)}${esc(l.naam)}</option>`).join("")}
 function botLabel(l,cls=""){if(!l)return"";const z=isZelf(l.bot);const t=esc(z?"zelf":l.bot);return l.link&&!z?`<a class="botpill ${cls}" href="${esc(l.link)}" title="Open de chat met ${esc(l.bot)}">${t}</a>`:`<span class="botpill ${z?"zelf":""} ${cls}">${t}</span>`}
 
@@ -791,12 +793,12 @@ function renderBord(){
     const lt=laagTeller(l.id);const isOuder=laag&&l.id===laag;
     if(w==="actief"&&!bs.length&&!nb&&!lt.heeft&&!isOuder)return"";
     return `<section class="stack ${bs.length?"":"leeg"} ${isOuder?"ouder":""}" style="--c:${esc(l.kleur)}" data-lijn="${esc(l.id)}">
-     <div class="sh"><span class="nm">${isOuder?`<small>Deze laag zelf</small>`:""}${esc(l.naam)}</span><span class="cnt" title="Open onderwerpen">${open}</span>${botLabel(l)}</div>
+     <div class="sh">${isOuder?"":`<span class="sgrip" data-kaartgrip="${esc(l.id)}" title="Kaart slepen: op een kop = ervoor, op een kaart = erin" aria-label="Kaart ${esc(l.naam)} slepen">⠿</span>`}<span class="nm" data-hernoem="${esc(l.id)}" title="Dubbelklik om te hernoemen">${isOuder?`<small>Deze laag zelf</small>`:""}${esc(l.naam)}</span><button class="hern" data-hernoemknop="${esc(l.id)}" title="Hernoemen" aria-label="Kaart ${esc(l.naam)} hernoemen">✎</button>${!isOuder&&!lt.heeft?`<button class="hern laagleeg" data-laag="${esc(l.id)}" title="Kaart erin leggen (laag eronder)" aria-label="Kaart in ${esc(l.naam)} leggen">＋</button>`:""}<span class="cnt" title="Open onderwerpen">${open}</span>${botLabel(l)}</div>
      ${lt.heeft&&!isOuder?`<button class="laagbtn" data-laag="${esc(l.id)}" title="Open de laag eronder">${icon("lagen")}<span>${lt.tekst}</span><b class="${lt.open?"":"nul"}">${lt.open}</b>${lt.telaat?`<b class="rood" title="Te laat">${lt.telaat}</b>`:""}<span class="pijl">▸</span></button>`:""}
      <div class="cards" data-soort="onderwerp">${nummer(bs).map(([b,n])=>piHtml(b,n)).join("")}</div>
      <div class="add"><input placeholder="+ onderwerp" data-add="${esc(l.id)}" data-soort="onderwerp" aria-label="Nieuw onderwerp op ${esc(l.naam)}"></div>
      <div class="bakrij ${isOpen?"open":""}"><button class="bakbtn ${isOpen?"open":""}" data-bak="${esc(l.id)}" aria-expanded="${isOpen}"><span>Bak</span><b class="${nb?"":"nul"}">${nb}</b><span class="sp"></span><span class="pijl">${isOpen?"▴":"▾"}</span></button>${bovenste(l.id,"bak")||bovenste(l.id,"onderwerp")||(!isOuder&&bovensteDiep(l.id))?`<button class="pak" data-pak="${esc(l.id)}" title="Pak het bovenste briefje van deze stapel en geef het een tijdblok">${icon("cal")}Pak bovenste</button>`:""}</div>
-     ${isOpen?`<div class="bak" data-soort="bak">${nummer(bak).map(([b,n])=>biHtml(b,n)).join("")||`<div class="leegtxt">Leeg gespeeld.</div>`}<div class="add"><input placeholder="+ in de bak" data-add="${esc(l.id)}" data-soort="bak" aria-label="Nieuw in de bak van ${esc(l.naam)}"></div></div>`:""}</section>`}).join("")+(laag?`<section class="stack nieuwestapel" style="--c:${esc(kleur(laag))}"><div class="add"><input data-nieuwestapel="${esc(laag)}" placeholder="+ stapel in ${esc((lijnVan(laag)||{}).naam||"")}" aria-label="Nieuwe stapel in deze laag"></div></section>`:"")||`<p class="hint">Nog niets. Begin in het kladblok.</p>`;
+     ${isOpen?`<div class="bak" data-soort="bak">${nummer(bak).map(([b,n])=>biHtml(b,n)).join("")||`<div class="leegtxt">Leeg gespeeld.</div>`}<div class="add"><input placeholder="+ in de bak" data-add="${esc(l.id)}" data-soort="bak" aria-label="Nieuw in de bak van ${esc(l.naam)}"></div></div>`:""}</section>`}).join("")+`<section class="stack nieuwestapel" style="--c:${esc(laag?kleur(laag):"#9B9B97")}"><div class="add"><input data-nieuwestapel="${esc(laag)}" placeholder="${laag?"+ kaart in "+esc((lijnVan(laag)||{}).naam||""):"+ kaart (rubriek)"}" aria-label="${laag?"Nieuwe kaart in deze laag":"Nieuwe kaart bovenaan"}"></div>${!laag&&!stapels.length?`<p class="hint">Nog geen kaarten. Maak je eerste rubriek, bijvoorbeeld Werk of Thuis.</p>`:""}</section>`;
   renderCirqllLaag();
   const ond=live.filter(b=>isOnd(b)&&b.lijn&&b.status!=="klaar").length,bak=live.filter(b=>isBak(b)&&b.lijn&&b.status!=="klaar").length,bot=live.filter(b=>b.status==="bot").length,klaar=live.filter(vandaagKlaar).length;
   $("#stats").textContent=`${ond} onderwerpen · ${bak} in de bakken · ${bot} bij bots · ${klaar} klaar vandaag`;
@@ -1035,11 +1037,53 @@ function renderKruimel(){const k=$("#kruimel");if(!laag){k.hidden=true;k.innerHT
 $("#kruimel").addEventListener("click",e=>{const b=e.target.closest("[data-gaan]");if(b)gaNaarLaag(b.dataset.gaan)});
 $("#board").addEventListener("click",e=>{const b=e.target.closest("[data-laag]");if(b){e.stopPropagation();gaNaarLaag(b.dataset.laag)}},true);
 $("#lines").addEventListener("click",e=>{const ln=e.target.closest(".ln");if(!ln)return;if(laagTeller(ln.dataset.lijn).heeft&&e.target.closest(".lg")){e.stopPropagation();gaNaarLaag(ln.dataset.lijn)}else if(laag){e.stopPropagation();gaNaarLaag("");setTimeout(()=>{const st=$(`.stack[data-lijn="${CSS.escape(ln.dataset.lijn)}"]`);st&&st.scrollIntoView({block:"center"})},0)}},true);
-$("#board").addEventListener("keydown",e=>{const i=e.target.closest("[data-nieuwestapel]");if(!i||e.key!=="Enter")return;const naam=i.value.trim();if(!naam)return;const ouder=lijnVan(i.dataset.nieuwestapel);if(!ouder)return;
-  S.lijnen.push({id:"l-"+uid(),naam,kleur:ouder.kleur,bot:ouder.bot,link:"",woorden:"",volgorde:Math.max(0,...S.lijnen.map(l=>l.volgorde))+1,archief:false,parent:ouder.id,bijgewerkt:now()});save();render(true);
-  toast("Stapel "+naam+" in "+ouder.naam);setTimeout(()=>{const n=$("[data-nieuwestapel]");n&&n.focus()},0)});
+/* ============ Kaarten: maken, hernoemen, slepen. Elke kaart kan weer een laag met kaarten hebben, onbeperkt diep. ============ */
+const KAARTKLEUR=["#3D5A80","#4C956C","#A23B72","#F18F01","#0E7C86","#6B7780"];
+const maxVolgorde=()=>Math.max(0,...S.lijnen.map(l=>+l.volgorde||0));
+function maakKaart(naam,parent=""){naam=String(naam||"").trim();if(!naam)return null;const ouder=parent?lijnVan(parent):null;if(parent&&(!ouder||ouder.archief))return null;
+  const l={id:"l-"+uid(),naam,kleur:ouder?ouder.kleur:KAARTKLEUR[actieveLijnen().filter(x=>!ouderVan(x)).length%KAARTKLEUR.length],bot:ouder?ouder.bot:"Zelf",link:"",woorden:"",volgorde:maxVolgorde()+1,archief:false,parent:ouder?ouder.id:"",bijgewerkt:now()};
+  S.lijnen.push(l);save();render(true);return l}
+function hernoemKaart(id,naam){const l=lijnVan(id);naam=String(naam||"").trim();if(!l||!naam||l.naam===naam)return false;l.naam=naam;l.bijgewerkt=now();save();render(true);return true}
+// Kaart verplaatsen: {voor:id} = in dezelfde laag als id, direct ervoor; {in:id} = in de laag van id (onderaan); {in:""} = bovenaan het bord.
+function verplaatsKaart(id,doel){const l=lijnVan(id);if(!l||!doel)return false;
+  if(doel.in!=null){const p=doel.in;if(p===id||(p&&(!lijnVan(p)||nakomelingen(id).some(k=>k.id===p))))return false;l.parent=p;l.volgorde=maxVolgorde()+1}
+  else if(doel.voor){const t=lijnVan(doel.voor);if(!t||t.id===id||nakomelingen(id).some(k=>k.id===t.id))return false;const p=ouderVan(t);
+    const sibs=actieveLijnen().filter(x=>ouderVan(x)===p&&x.id!==id);const i=sibs.findIndex(x=>x.id===t.id);const vorige=sibs[i-1];
+    l.parent=p;l.volgorde=vorige?((+vorige.volgorde)+(+t.volgorde))/2:(+t.volgorde)-1}
+  else return false;
+  l.bijgewerkt=now();S.lijnen.sort((a,c)=>(a.volgorde-c.volgorde)||(a.id<c.id?-1:1));save();render(true);return true}
+$("#board").addEventListener("keydown",e=>{const i=e.target.closest("[data-nieuwestapel]");if(!i||e.key!=="Enter")return;const naam=i.value.trim();if(!naam)return;
+  const l=maakKaart(naam,i.dataset.nieuwestapel||"");if(!l)return;const ouder=lijnVan(l.parent);
+  toast("Kaart "+naam+(ouder?" in "+ouder.naam:" bovenaan"));setTimeout(()=>{const n=$("[data-nieuwestapel]");n&&n.focus()},0)});
+// Hernoemen: dubbelklik op de naam of het potloodje; Enter bewaart, Escape annuleert.
+function startHernoem(id){const nm=$(`.stack[data-lijn="${CSS.escape(id)}"] .sh .nm`);const l=lijnVan(id);if(!nm||!l)return;
+  nm.innerHTML=`<input class="hernoem" value="${esc(l.naam)}" aria-label="Nieuwe naam voor ${esc(l.naam)}">`;const inp=nm.querySelector("input");inp.focus();inp.select();let klaar=false;
+  const af=ok=>{if(klaar)return;klaar=true;if(!(ok&&hernoemKaart(id,inp.value)))render(true)};
+  inp.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter")af(true);else if(e.key==="Escape")af(false)});inp.addEventListener("blur",()=>af(true))}
+$("#board").addEventListener("dblclick",e=>{const n=e.target.closest("[data-hernoem]");if(n&&!e.target.closest("input"))startHernoem(n.dataset.hernoem)});
+$("#board").addEventListener("click",e=>{const n=e.target.closest("[data-hernoemknop]");if(n){e.stopPropagation();startHernoem(n.dataset.hernoemknop)}});
+// Kaart slepen aan het grijpertje (muis en touch): op de kop van een kaart = ervoor, ergens anders op een kaart = erin,
+// op de lijnenkaart = erin, op het kruimelpad = naar die laag.
+let ks=null;
+function kaartDoel(x,y){const el=document.elementFromPoint(x,y);if(!el||!ks)return null;
+  const kr=el.closest("#kruimel [data-gaan]");if(kr&&!kr.classList.contains("terug"))return{in:kr.dataset.gaan,hl:kr};
+  const ln=el.closest("#lines .ln");if(ln)return ln.dataset.lijn===ks.id?null:{in:ln.dataset.lijn,hl:ln};
+  const st=el.closest(".stack:not(.nieuwestapel)");if(!st||st.dataset.lijn===ks.id)return null;const id=st.dataset.lijn;
+  if(st.classList.contains("ouder"))return{in:id,hl:st};
+  return el.closest(".sh")?{voor:id,hl:st.querySelector(".sh"),kop:true}:{in:id,hl:st}}
+function kaartNaar(x,y){if(!ks)return;ks.ghost.style.transform=`translate(${x+8}px,${y+8}px)`;$$(".over,.kaartvoor").forEach(z=>z.classList.remove("over","kaartvoor"));
+  const d=kaartDoel(x,y);ks.doel=d&&(d.in!=null?!(d.in===ks.id||(d.in&&nakomelingen(ks.id).some(k=>k.id===d.in))):!nakomelingen(ks.id).some(k=>k.id===d.voor))?d:null;if(ks.doel)ks.doel.hl.classList.add(ks.doel.kop?"kaartvoor":"over")}
+function kaartEind(ok){if(!ks)return;const s=ks;ks=null;s.ghost.remove();document.body.classList.remove("slepen");$$(".over,.kaartvoor").forEach(z=>z.classList.remove("over","kaartvoor"));
+  if(!ok||!s.doel)return;const d=s.doel;const l=lijnVan(s.id);if(verplaatsKaart(s.id,d.voor?{voor:d.voor}:{in:d.in})){const t=lijnVan(d.voor||d.in);toast(d.voor?l.naam+" vóór "+t.naam:l.naam+(t?" in "+t.naam:" bovenaan"))}}
+document.addEventListener("pointerdown",e=>{const g=e.target.closest&&e.target.closest("[data-kaartgrip]");if(!g||ks||e.pointerType==="mouse"&&e.button!==0)return;e.preventDefault();e.stopPropagation();
+  const l=lijnVan(g.dataset.kaartgrip);if(!l)return;const gh=document.createElement("div");gh.className="kaartkloon";gh.style.setProperty("--c",l.kleur);gh.textContent=l.naam;document.body.appendChild(gh);
+  ks={id:l.id,ghost:gh,doel:null};document.body.classList.add("slepen");kaartNaar(e.clientX,e.clientY)},true);
+document.addEventListener("pointermove",e=>{if(ks){e.preventDefault();kaartNaar(e.clientX,e.clientY)}},{passive:false});
+document.addEventListener("touchmove",e=>{if(ks){e.preventDefault();const t=e.touches[0];if(t)kaartNaar(t.clientX,t.clientY)}},{passive:false});
+document.addEventListener("pointerup",()=>{if(ks)kaartEind(true)});document.addEventListener("touchend",()=>{if(ks)kaartEind(true)});
+document.addEventListener("pointercancel",()=>{});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&ks)kaartEind(false)});
 // Het bovenste van een stapel, of (als die zelf leeg is) van de stapels eronder, in volgorde.
-function bovensteDiep(id,d=0){const b=bovenste(id,"bak")||bovenste(id,"onderwerp");if(b||d>6)return b;for(const k of kinderen(id)){const x=bovensteDiep(k.id,d+1);if(x)return x}return null}
+function bovensteDiep(id,d=0){const b=bovenste(id,"bak")||bovenste(id,"onderwerp");if(b||d>64)return b;for(const k of kinderen(id)){const x=bovensteDiep(k.id,d+1);if(x)return x}return null}
 
 /* ============ Cirqll: alleen-lezen spiegel (cirqll.json in koach-data) ============ */
 // Cirqll-priority: lager getal = belangrijker. Blijkt het andersom, zet dit op false.
@@ -1208,7 +1252,7 @@ $("#btnBoven").onclick=$("#btnBoven2").onclick=()=>openBoven(null,null);
 
 /* ============ Start ============ */
 render();zetStand(Sync.cfg?"bezig":"lokaal");if(Sync.cfg)syncNu();
-window.Koach={get S(){return S},merge,norm,canon,onttaalZin,kiesLijn,kompasZin,syncNu,Sync,legOp,openBoven,bovenste,posTussen,bovensteDiep,laadCirqll,CQ,gaNaarLaag,ouderVan};
+window.Koach={get S(){return S},maakKaart,hernoemKaart,verplaatsKaart,pad,kinderen,merge,norm,canon,onttaalZin,kiesLijn,kompasZin,syncNu,Sync,legOp,openBoven,bovenste,posTussen,bovensteDiep,laadCirqll,CQ,gaNaarLaag,ouderVan};
 </script>
 </body>
 </html>
