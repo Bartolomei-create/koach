@@ -342,6 +342,10 @@ dialog.wide{width:min(860px,96vw)}
 .stack .sh .nm input.hernoem{font:inherit;width:100%;border:1px solid var(--c);border-radius:3px;padding:1px 4px}
 .stack .sh.kaartvoor{box-shadow:inset 0 3px 0 var(--c)}
 .kaartkloon{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;background:#fff;border:1px solid var(--c);border-left:5px solid var(--c);border-radius:4px;padding:6px 10px;font-weight:700;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.cqacties{display:flex;align-items:center;gap:6px;padding:0 9px 6px;font-size:12px}.cqacties .sp,.cqt .r2 .sp{flex:1}
+.cqopen{color:var(--c);font-weight:700;text-decoration:none;font-size:12px;white-space:nowrap}.cqopen:hover{text-decoration:underline}
+.cqaf{font-weight:700}.cqafok{color:#2E7D32;font-weight:700}.stack.cqk.af{opacity:.6}.cqt.af{opacity:.55}.cqt.af .tn{text-decoration:line-through}
+.cqteller{font-weight:700;color:var(--ink)}.cqundo{display:flex;align-items:center;gap:8px;margin:6px 0 8px;padding:6px 10px;border:1px solid #2E7D32;border-radius:4px;background:#F1F8F1;font-size:12.5px}.cqundo b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stack.nieuwestapel{border-top-style:dashed;min-height:0;padding-top:8px;background:transparent}
 .cqlaag{margin-top:6px}
 .cqh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 10px;padding-top:12px;border-top:2px solid var(--line)}.cqh .sp{flex:1}
@@ -519,6 +523,7 @@ dialog.wide{width:min(860px,96vw)}
       <h3>Algemeen</h3>
       <div class="grid2"><div class="fld"><label for="sNaam">Naam</label><input id="sNaam"></div>
       <div class="fld"><label for="sEig">Eigenaren in Cirqll (user_id = naam, één per regel)</label><textarea id="sEig" rows="2" placeholder="1234 = Naam"></textarea></div>
+      <div class="fld"><label for="sCqUrl">Link naar een klant in Cirqll ({id} = klantnummer; leeg = geen link)</label><input id="sCqUrl" type="url" placeholder="https://…/{id}"></div>
       <div class="fld"><label>Back-up</label><div style="display:flex;gap:6px"><button class="btn sm" id="sExport">Exporteer</button><label class="btn sm" style="cursor:pointer">Importeer<input type="file" id="sImport" accept="application/json,.json" hidden></label></div></div></div>
     </div>
   </div>
@@ -574,7 +579,7 @@ function standaardLijnen(){return STANDAARD.map(([id,naam,kleur,bot,woorden],i)=
 const isZelf=b=>!b||/^zelf$/i.test(b.trim());
 
 /* ============ Staat ============ */
-function leeg(){return{schema:"koach/3",instellingen:{naam:"",ritme:3,periode:"dag",toon:2,rol:"wortel",weergave:"alles",eigenaren:{},bijgewerkt:0},lijnen:standaardLijnen(),briefjes:[],planning:{},kompas:[]}}
+function leeg(){return{schema:"koach/3",instellingen:{naam:"",ritme:3,periode:"dag",toon:2,rol:"wortel",weergave:"alles",eigenaren:{},bijgewerkt:0},lijnen:standaardLijnen(),briefjes:[],planning:{},kompas:[],cirqllAfgevinkt:{}}}
 function hsh(s){let h=5381;for(const c of String(s))h=(h*33+c.charCodeAt(0))>>>0;return h.toString(36)}
 // Standaardwaarden zijn vast (geen tijd of toeval), zodat twee apparaten exact hetzelfde bestand maken.
 function normBriefje(b){const x=Object.assign({tekst:"",lijn:"",prio:2,status:"open",archief:false,weg:false,bron:"bart",nieuw:false,notitie:"",notitieVan:"",toelichting:"",gemaakt:0,klaarOp:null},b);
@@ -587,7 +592,8 @@ function norm(x){
     lijnen:Array.isArray(x.lijnen)&&x.lijnen.length?x.lijnen.map(l=>Object.assign({id:"l-"+hsh(l.naam||""),naam:"Lijn",kleur:"#888888",bot:"Zelf",link:"",woorden:"",volgorde:99,archief:false,parent:"",bijgewerkt:0},l)):b.lijnen,
     briefjes:(Array.isArray(x.briefjes)?x.briefjes:[]).map(normBriefje),
     planning:x.planning&&typeof x.planning==="object"?x.planning:{},
-    kompas:(Array.isArray(x.kompas)?x.kompas:[]).map(k=>Object.assign({id:"k-"+hsh(JSON.stringify(k)),gemaakt:0,bijgewerkt:0},k))};
+    kompas:(Array.isArray(x.kompas)?x.kompas:[]).map(k=>Object.assign({id:"k-"+hsh(JSON.stringify(k)),gemaakt:0,bijgewerkt:0},k)),
+    cirqllAfgevinkt:normAf(x.cirqllAfgevinkt)};
   for(const l of s.lijnen)if(OUDE_LIJN[l.id]!=null)l.archief=true;
   // De data is leidend: een bestaand bord houdt precies zijn eigen lijnen en lagen (bijv. zes rubrieken bovenaan).
   // Een standaardlijn komt er alleen bij als een briefje ernaar verwijst en hij ontbreekt (migratie van oude lijnen).
@@ -599,13 +605,17 @@ function norm(x){
   s.kompas.sort((a,c)=>(a.gemaakt-c.gemaakt)||(a.id<c.id?-1:1));
   return s;
 }
+// Afgevinkt in de Cirqll-laag (alleen Koach-staat; Cirqll zelf blijft ongewijzigd). Sleutel "klant:<id>" of "taak:<id>".
+// Waarde {op:ISO, door:naam, bijgewerkt:ms} en bij ongedaan maken ook uit:true (zodat samenvoegen het niet terugzet).
+function normAf(o){const r={};if(o&&typeof o==="object"&&!Array.isArray(o))for(const k of Object.keys(o).sort()){const v=o[k];if(v&&typeof v==="object")r[k]=Object.assign({op:"",door:"",bijgewerkt:0},v)}return r}
+function mergeAf(a,b){const r=Object.assign({},a);for(const [k,v] of Object.entries(b||{})){const x=r[k];if(!x||(+v.bijgewerkt||0)>(+x.bijgewerkt||0))r[k]=v}return r}
 // Samenvoegen: per id wint de laatst bijgewerkte versie. Niets verdwijnt stil; weggooien is een vlag.
 function mergeArr(a,b){const m=new Map();for(const x of a)m.set(x.id,x);for(const y of b){const x=m.get(y.id);if(!x||(+y.bijgewerkt||0)>(+x.bijgewerkt||0))m.set(y.id,y)}return[...m.values()]}
 function merge(lok,ver){
   const a=norm(lok),b=norm(ver);
   const planning={};for(const k of new Set([...Object.keys(a.planning),...Object.keys(b.planning)])){const x=a.planning[k],y=b.planning[k];planning[k]=!x?y:!y?x:((+y.bijgewerkt||0)>(+x.bijgewerkt||0)?y:x)}
   return norm(JSON.parse(JSON.stringify({instellingen:(+b.instellingen.bijgewerkt||0)>(+a.instellingen.bijgewerkt||0)?b.instellingen:a.instellingen,
-    lijnen:mergeArr(a.lijnen,b.lijnen),briefjes:mergeArr(a.briefjes,b.briefjes),planning,kompas:mergeArr(a.kompas,b.kompas)})));
+    lijnen:mergeArr(a.lijnen,b.lijnen),briefjes:mergeArr(a.briefjes,b.briefjes),planning,kompas:mergeArr(a.kompas,b.kompas),cirqllAfgevinkt:mergeAf(a.cirqllAfgevinkt,b.cirqllAfgevinkt)})));
 }
 function canon(v){if(Array.isArray(v))return"["+v.map(canon).join(",")+"]";if(v&&typeof v==="object")return"{"+Object.keys(v).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}";return JSON.stringify(v===undefined?null:v)}
 
@@ -963,12 +973,12 @@ $("#tLijnen").addEventListener("click",e=>{const b=e.target.closest('[data-f="we
 $("#sLijnPlus").onclick=()=>{const kl=["#0E7C86","#A23B72","#3D5A80","#F18F01","#4C956C"][S.lijnen.length%5];S.lijnen.push({id:"l-"+uid(),naam:"Nieuwe lijn",kleur:kl,bot:"Zelf",link:"",woorden:"",volgorde:Math.max(0,...S.lijnen.map(l=>l.volgorde))+1,archief:false,bijgewerkt:now()});save();renderTabel();render();const i=$("#tLijnen tr:last-child [data-f=naam]");i.focus();i.select()};
 function openInst(focusSync){const c=Sync.cfg||{};const q=new URLSearchParams(location.search);
   $("#sRepo").value=c.repo||q.get("repo")||STANDAARD_REPO;$("#sPath").value=c.path||q.get("file")||STANDAARD_BESTAND;$("#sToken").value="";$("#sToken").placeholder=c.token?"•••••••• (opgeslagen op dit apparaat)":"github_pat_…";
-  const api=c.api||q.get("api")||"";$("#sApiWrap").hidden=!api;$("#sApi").value=api;$("#sNaam").value=I().naam||"";$("#sNaam").dataset.org=$("#sNaam").value;$("#sEig").value=eigTekst();$("#sEig").dataset.org=$("#sEig").value;
+  const api=c.api||q.get("api")||"";$("#sApiWrap").hidden=!api;$("#sApi").value=api;$("#sNaam").value=I().naam||"";$("#sNaam").dataset.org=$("#sNaam").value;$("#sEig").value=eigTekst();$("#sEig").dataset.org=$("#sEig").value;$("#sCqUrl").value=I().cirqllUrl||"";
   $("#sStatus").textContent=Sync.cfg?syncTekst():"Nog niet gekoppeld. Het bord staat nu alleen in deze browser.";$("#sStatus").className="status";
   renderTabel();$("#dlgInst").showModal();if(focusSync===true)$("#sRepo").focus()}
 $("#tbInst").onclick=openInst;$("#sync").onclick=()=>openInst(true);
 $("#sOk").onclick=()=>{const n=$("#sNaam").value.trim();if($("#sNaam").dataset.org!==n&&n!==I().naam)setInst("naam",n);
-  if($("#sEig").value!==$("#sEig").dataset.org){const o=leesEig($("#sEig").value);if(canon(o)!==canon(I().eigenaren||{}))setInst("eigenaren",o)}$("#dlgInst").close();render()};
+  {const u=$("#sCqUrl").value.trim();if(u!==(I().cirqllUrl||"")){if(!u||/^https:\/\/.+\{id\}/i.test(u))setInst("cirqllUrl",u);else toast("Cirqll-link: begin met https:// en zet {id} op de plek van het klantnummer")}}if($("#sEig").value!==$("#sEig").dataset.org){const o=leesEig($("#sEig").value);if(canon(o)!==canon(I().eigenaren||{}))setInst("eigenaren",o)}$("#dlgInst").close();render()};
 $("#sExport").onclick=$("#lnkExport").onclick=()=>{download(JSON.stringify(S,null,2),"koach-backup-"+todayStr()+".json","application/json");toast("Back-up gedownload (zonder sleutel)")};
 $("#sImport").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.briefjes))throw 0;S=merge(S,d);save();render();toast("Back-up samengevoegd met je bord")}catch(err){toast("Dit bestand kan Koach niet lezen")}e.target.value=""};
 function renderArch(){const a=S.briefjes.filter(b=>!b.weg&&(b.archief||(b.status==="klaar"&&!vandaagKlaar(b)))).sort((x,y)=>(y.bijgewerkt||0)-(x.bijgewerkt||0));
@@ -1096,6 +1106,16 @@ function cqPad(p){const i=String(p||"").lastIndexOf("/");return(i>=0?p.slice(0,i
 async function laadCirqll(force){if(!Sync.cfg){CQ.stand="lokaal";return}if(CQ.laden||(!force&&now()-CQ.tijd<60000)||(force&&now()-CQ.tijd<5000))return;CQ.laden=true;
   try{const r=await ghGet(Object.assign({},Sync.cfg,{path:cqPad(Sync.cfg.path)}));if(!r){CQ.data=null;CQ.stand="geen";localStorage.removeItem(CQKEY)}else{CQ.data=r.data;CQ.stand="ok";try{localStorage.setItem(CQKEY,JSON.stringify(r.data))}catch(_){}}}
   catch(e){CQ.stand=CQ.data?"ok":"fout"}finally{CQ.laden=false;CQ.tijd=now();render()}}
+const cqAf=()=>S.cirqllAfgevinkt||(S.cirqllAfgevinkt={});
+const isAf=key=>{const x=cqAf()[key];return!!(x&&!x.uit)};
+const taakAf=t=>isAf("taak:"+t.id)||isAf("klant:"+t.customer_id);
+const klantAf=(k,taken)=>isAf("klant:"+k.id)||(taken.length>0&&taken.every(t=>isAf("taak:"+t.id)));
+function zetAf(key,aan,stil){const af=cqAf();if(aan)af[key]={op:new Date().toISOString(),door:I().naam||APPARAAT,bijgewerkt:now()};else if(af[key])af[key]=Object.assign({},af[key],{uit:true,bijgewerkt:now()});else return;
+  if(!aan&&key.startsWith("klant:")){const id=key.slice(6);for(const t of cqTaken())if(String(t.customer_id)===id&&isAf("taak:"+t.id))af["taak:"+t.id]=Object.assign({},af["taak:"+t.id],{uit:true,bijgewerkt:now()})}
+  CQ.laatste=aan?key:null;save();if(!stil)render(true)}
+// Link naar het dossier in de Cirqll-webapp: patroon uit instellingen.cirqllUrl (bijv. https://…/{id}). Leeg = geen link.
+function cqUrl(id){const p=String(I().cirqllUrl||"").trim();if(!p||!/^https:\/\//i.test(p)||!p.includes("{id}")||id==null)return"";return p.replace(/\{id\}/g,encodeURIComponent(String(id)))}
+const cqToonAf=()=>localStorage.getItem("koach.cqToonAf")==="1";
 const eigenaarNaam=id=>((I().eigenaren||{})[String(id)])||("#"+id);
 const cqKlanten=()=>CQ.data&&Array.isArray(CQ.data.klanten)?CQ.data.klanten.filter(k=>k&&k.id!=null):[];
 const cqTaken=()=>CQ.data&&Array.isArray(CQ.data.taken)?CQ.data.taken.filter(t=>t&&t.id!=null&&!t.archived_at):[];
@@ -1111,7 +1131,7 @@ function cqOverzicht(){const f=cqFilter();const taken=cqTaken().filter(t=>!f||St
   met.sort((a,b)=>(prioSleutel(a.k.priority)-prioSleutel(b.k.priority))||datumSleutel(a.taken[0].vervaldatum).localeCompare(datumSleutel(b.taken[0].vervaldatum))||String(a.k.naam||"").localeCompare(String(b.k.naam||""),"nl"));
   const zonder=kl.filter(k=>!per.has(String(k.id))&&!k.onbekend&&(!f||String(k.eigenaar)===f)).sort((a,b)=>(prioSleutel(a.priority)-prioSleutel(b.priority))||String(a.naam||"").localeCompare(String(b.naam||""),"nl"));
   return{met,zonder,taken}}
-function cqTellers(){if(CQ.stand!=="ok")return{klanten:0,open:0,telaat:0};const t=cqTaken();const v=todayStr();return{klanten:cqKlanten().length,open:t.length,telaat:t.filter(x=>x.vervaldatum&&String(x.vervaldatum).slice(0,10)<v).length}}
+function cqTellers(){if(CQ.stand!=="ok")return{klanten:0,open:0,telaat:0};const t=cqTaken().filter(x=>!taakAf(x));const v=todayStr();return{klanten:cqKlanten().length,open:t.length,telaat:t.filter(x=>x.vervaldatum&&String(x.vervaldatum).slice(0,10)<v).length}}
 const dagKort=d=>{if(!d)return"";const [y,m,dd]=String(d).slice(0,10).split("-").map(Number);return wanneerKort({date:`${y}-${p2(m)}-${p2(dd)}`,time:""}).trim()};
 function cqSlot(t){const d=t.vervaldatum&&String(t.vervaldatum).slice(0,10)>=todayStr()?String(t.vervaldatum).slice(0,10):todayStr();return{date:d,time:"09:00",dur:30}}
 function cqAlsBriefje(t,k){return{id:"cirqll-"+t.id,tekst:t.naam+(k&&k.naam?" · "+k.naam:""),toelichting:String(t.omschrijving||""),lijn:cirqllLijn(),prio:2}}
@@ -1119,19 +1139,28 @@ function renderCirqllLaag(){const box=$("#cqLaag");if(!laag||laag!==cirqllLijn()
   const kop=extra=>`<div class="cqh"><span class="cqlogo">Cirqll</span><span class="lbl">laag onder ${esc(l.naam)} · alleen lezen</span>${extra||""}</div>`;
   if(CQ.stand!=="ok"){box.innerHTML=kop()+`<div class="cqleeg"><b>Nog geen Cirqll-gegevens.</b> ${CQ.stand==="lokaal"?"Koppel eerst de synchronisatie (Instellingen); de klanten komen uit cirqll.json in dezelfde repository.":CQ.stand==="fout"?"cirqll.json kon niet worden geladen. Probeer het zo opnieuw.":CQ.laden?"Laden…":"De Cirqll-bot zet ze in cirqll.json naast board.json. Zodra dat bestand er is, staan je klanten hier."}</div>`;return}
   const o=cqOverzicht();const f=cqFilter();const v=todayStr();const eig=[...new Set([...cqTaken().map(t=>String(t.user_id)),...cqKlanten().map(k=>String(k.eigenaar))].filter(x=>x&&x!=="undefined"&&x!=="null"))];
-  const telaat=o.taken.filter(t=>t.vervaldatum&&String(t.vervaldatum).slice(0,10)<v).length;const gw=CQ.data.geschreven?new Date(CQ.data.geschreven):null;
-  box.innerHTML=kop(`<span class="hint">${o.met.length} klanten met open taken · ${o.taken.length} taken${telaat?` · <b class="rood">${telaat} te laat</b>`:""}${gw&&!isNaN(gw)?" · bijgewerkt "+esc(gw.toLocaleString("nl-NL",{weekday:"short",hour:"2-digit",minute:"2-digit"})):""}</span><span class="sp"></span>
-    <div class="seg" id="cqFilter"><button data-eig="" class="${f?"":"on"}">Iedereen</button>${eig.map(id=>`<button data-eig="${esc(id)}" class="${f===id?"on":""}">${esc(eigenaarNaam(id))}</button>`).join("")}</div>`)+
-   `<div class="cqgrid">${o.met.map(({k,taken},i)=>{const nc=k.next_contact||{};const c=k.custom||{};const labels=[c.label_1,c.label_2,c.label_3].filter(Boolean);
-     return `<section class="stack cqk ${i===0?"boven":""}" style="--c:${esc(l.kleur)}" data-cq-klant="${esc(k.id)}">
+  const toon=cqToonAf();const alle=o.met;const nAf=alle.filter(x=>klantAf(x.k,x.taken)).length;
+  // Grootste reeks gelijknamige taken (bijv. een opdracht om alle dossiers na te lopen): eigen teller.
+  const reeks=(()=>{const c=new Map();for(const t of o.taken)c.set(t.naam,(c.get(t.naam)||0)+1);let best=null;for(const [n,a] of c)if(a>=5&&(!best||a>best[1]))best=[n,a];if(!best)return"";const af=o.taken.filter(t=>t.naam===best[0]&&taakAf(t)).length;return` · <span class="cqreeks" title="${esc(best[0])}">${af} van ${best[1]} ‘${esc(best[0].length>34?best[0].slice(0,33)+"…":best[0])}’</span>`})();
+  o.met=alle.map(x=>({k:x.k,af:klantAf(x.k,x.taken),taken:x.taken.filter(t=>toon||!taakAf(t))})).filter(x=>toon||!x.af&&x.taken.length);
+  const telaat=o.taken.filter(t=>!taakAf(t)&&t.vervaldatum&&String(t.vervaldatum).slice(0,10)<v).length;const gw=CQ.data.geschreven?new Date(CQ.data.geschreven):null;
+  const laatste=CQ.laatste&&isAf(CQ.laatste)?CQ.laatste:null;const lNaam=laatste?(laatste.startsWith("klant:")?((cqKlanten().find(k=>"klant:"+k.id===laatste)||{}).naam||laatste):((cqTaken().find(t=>"taak:"+t.id===laatste)||{}).naam||laatste)):"";
+  box.innerHTML=kop(`<span class="hint"><b class="cqteller">${nAf} van ${alle.length} nagelopen</b>${reeks} · ${alle.length} klanten met open taken · ${o.taken.length} taken${telaat?` · <b class="rood">${telaat} te laat</b>`:""}${gw&&!isNaN(gw)?" · bijgewerkt "+esc(gw.toLocaleString("nl-NL",{weekday:"short",hour:"2-digit",minute:"2-digit"})):""}</span><span class="sp"></span>
+    <button class="btn sm cqtoon" data-cq-toon="${toon?"0":"1"}">${toon?"Verberg afgevinkt":"Toon afgevinkt"}${nAf?" ("+nAf+")":""}</button><div class="seg" id="cqFilter"><button data-eig="" class="${f?"":"on"}">Iedereen</button>${eig.map(id=>`<button data-eig="${esc(id)}" class="${f===id?"on":""}">${esc(eigenaarNaam(id))}</button>`).join("")}</div>`)+
+   `${laatste?`<div class="cqundo">Afgevinkt: <b>${esc(lNaam)}</b><button class="btn sm" data-cq-terug="${esc(laatste)}">Ongedaan maken</button></div>`:""}<div class="cqgrid">${o.met.map(({k,taken,af},i)=>{const url=cqUrl(k.onbekend?null:k.id);const nc=k.next_contact||{};const c=k.custom||{};const labels=[c.label_1,c.label_2,c.label_3].filter(Boolean);
+     return `<section class="stack cqk ${i===0?"boven":""} ${af?"af":""}" style="--c:${esc(l.kleur)}" data-cq-klant="${esc(k.id)}">
       <div class="sh"><span class="nr">${i+1}</span><span class="nm">${esc(k.naam||"Klant #"+k.id)}</span>${k.priority!=null&&k.priority!==""?`<span class="cqp" title="Cirqll-prioriteit">P${esc(k.priority)}</span>`:""}${k.eigenaar!=null?`<span class="botpill zelf">${esc(eigenaarNaam(k.eigenaar))}</span>`:""}</div>
+      <div class="cqacties">${url?`<a class="cqopen" target="_blank" rel="noopener noreferrer" href="${esc(url)}" title="Open het dossier in Cirqll (nieuw tabblad)">Open in Cirqll ↗</a>`:""}<span class="sp"></span>${af?`<span class="cqafok">✓ Nagelopen</span><button class="btn sm" data-cq-terug="klant:${esc(k.id)}">Ongedaan maken</button>`:`<button class="btn sm cqaf" data-cq-af="klant:${esc(k.id)}" title="Klaar in Koach (Cirqll zelf blijft ongewijzigd)">✓ Afgerond</button>`}</div>
       ${nc.datum||nc.notitie||labels.length||c.box_map||k.telefoon||k.email?`<div class="cqmeta">${nc.datum?`<span class="${String(nc.datum).slice(0,10)<v?"rood":""}">Contact ${esc(dagKort(nc.datum))}</span>`:""}${nc.notitie?`<span class="cqnc">${esc(nc.notitie)}</span>`:""}${labels.map(x=>`<span class="cqlabel">${esc(x)}</span>`).join("")}${c.box_map?`<span class="cqbox" title="Box-map">Box: ${esc(c.box_map)}</span>`:""}${k.telefoon?`<a href="tel:${esc(String(k.telefoon).replace(/[^\d+]/g,""))}">${esc(k.telefoon)}</a>`:""}${k.email?`<a href="mailto:${esc(k.email)}">${esc(k.email)}</a>`:""}</div>`:""}
       <div class="cqtaken">${taken.map((t,j)=>{const d=t.vervaldatum?String(t.vervaldatum).slice(0,10):"";const st=d&&d<v?"telaat":d===v?"vandaag":"";const sl=cqSlot(t);const pb=cqAlsBriefje(t,k);
-        return `<div class="cqt ${j===0?"boven":""}" data-cq-taak="${esc(t.id)}"><div class="r1"><span class="due ${st}">${d?esc(dagKort(d)):"geen datum"}</span><span class="tn">${esc(t.naam||"")}</span>${t.user_id!=null&&!f?`<span class="wie">${esc(eigenaarNaam(t.user_id))}</span>`:""}</div>
+        const tAf=taakAf(t);const tUrl=cqUrl(t.customer_id);return `<div class="cqt ${j===0?"boven":""} ${tAf?"af":""}" data-cq-taak="${esc(t.id)}"><div class="r1"><span class="due ${st}">${d?esc(dagKort(d)):"geen datum"}</span><span class="tn">${esc(t.naam||"")}</span>${t.user_id!=null&&!f?`<span class="wie">${esc(eigenaarNaam(t.user_id))}</span>`:""}</div>
          ${t.omschrijving?`<div class="toel lang"><div class="tl">${esc(t.omschrijving)}</div></div>`:""}
-         <div class="r2"><button class="lk" data-cq-ics="${esc(t.id)}" title="Tijdblok als .ics">.ics</button><a class="lk" target="_blank" rel="noopener noreferrer" href="${esc(outlookUrl(pb,sl))}">Outlook</a></div></div>`}).join("")}</div></section>`}).join("")||`<div class="cqleeg">Geen open taken${f?" voor "+esc(eigenaarNaam(f)):""}.</div>`}</div>
+         <div class="r2"><button class="lk" data-cq-ics="${esc(t.id)}" title="Tijdblok als .ics">.ics</button><a class="lk" target="_blank" rel="noopener noreferrer" href="${esc(outlookUrl(pb,sl))}">Outlook</a>${tUrl?`<a class="cqopen" target="_blank" rel="noopener noreferrer" href="${esc(tUrl)}" title="Open de klant in Cirqll (nieuw tabblad)">Cirqll ↗</a>`:""}<span class="sp"></span>${tAf?(isAf("taak:"+t.id)?`<button class="lk" data-cq-terug="taak:${esc(t.id)}">Ongedaan</button>`:""):`<button class="lk cqaf" data-cq-af="taak:${esc(t.id)}" title="Taak klaar in Koach (Cirqll zelf blijft ongewijzigd)">✓</button>`}</div></div>`}).join("")}</div></section>`}).join("")||`<div class="cqleeg">Geen open taken${f?" voor "+esc(eigenaarNaam(f)):""}.</div>`}</div>
    ${o.zonder.length?`<details class="cqrest"><summary>${o.zonder.length} klanten zonder open taken</summary><div>${o.zonder.map(k=>`<span>${esc(k.naam||"Klant #"+k.id)}${k.next_contact&&k.next_contact.datum?` <small>· contact ${esc(dagKort(k.next_contact.datum))}</small>`:""}</span>`).join("")}</div></details>`:""}`}
 $("#cqLaag").addEventListener("click",e=>{const f=e.target.closest("[data-eig]");if(f){localStorage.setItem("koach.cqEigenaar",f.dataset.eig);render(true);return}
+  const af=e.target.closest("[data-cq-af]");if(af){zetAf(af.dataset.cqAf,true);toast("Afgevinkt in Koach · Cirqll zelf blijft ongewijzigd");return}
+  const tr=e.target.closest("[data-cq-terug]");if(tr){zetAf(tr.dataset.cqTerug,false);toast("Weer open");return}
+  const tn=e.target.closest("[data-cq-toon]");if(tn){localStorage.setItem("koach.cqToonAf",tn.dataset.cqToon);render(true);return}
   const ic=e.target.closest("[data-cq-ics]");if(ic){const t=cqTaken().find(x=>String(x.id)===ic.dataset.cqIcs);if(!t)return;const k=cqKlanten().find(x=>String(x.id)===String(t.customer_id));const pb=cqAlsBriefje(t,k);downloadIcs([pb],"koach-cirqll-"+slug(pb.tekst)+".ics",()=>cqSlot(t));toast("Afspraak gedownload (Cirqll zelf blijft ongewijzigd)")}});
 
 /* ============ Eigenaren (Cirqll user_id → naam) in Instellingen ============ */
@@ -1252,7 +1281,7 @@ $("#btnBoven").onclick=$("#btnBoven2").onclick=()=>openBoven(null,null);
 
 /* ============ Start ============ */
 render();zetStand(Sync.cfg?"bezig":"lokaal");if(Sync.cfg)syncNu();
-window.Koach={get S(){return S},maakKaart,hernoemKaart,verplaatsKaart,pad,kinderen,merge,norm,canon,onttaalZin,kiesLijn,kompasZin,syncNu,Sync,legOp,openBoven,bovenste,posTussen,bovensteDiep,laadCirqll,CQ,gaNaarLaag,ouderVan};
+window.Koach={get S(){return S},zetAf,isAf,cqUrl,maakKaart,hernoemKaart,verplaatsKaart,pad,kinderen,merge,norm,canon,onttaalZin,kiesLijn,kompasZin,syncNu,Sync,legOp,openBoven,bovenste,posTussen,bovensteDiep,laadCirqll,CQ,gaNaarLaag,ouderVan};
 </script>
 </body>
 </html>
